@@ -11,6 +11,26 @@ function isUraianInformasiColumn(name: string): boolean {
   return n.includes("uraian") && (n.includes("informasi") || n.includes("arsip"));
 }
 
+/** Lebar kolom (ch) dari header + sampel isi — kolom pendek (No) tetap sempit. */
+function measureColWidths(
+  headers: string[],
+  rows: string[][],
+  sampleLimit = 200
+): (number | null)[] {
+  const sample = rows.length > sampleLimit ? rows.slice(0, sampleLimit) : rows;
+  return headers.map((h, i) => {
+    if (isUraianInformasiColumn(h)) return null;
+    const words = h.trim().split(/\s+/).filter(Boolean);
+    let maxLen = words.length ? Math.max(...words.map((w) => w.length)) : h.length;
+    for (const row of sample) {
+      const len = String(row[i] ?? "").trim().length;
+      if (len > maxLen) maxLen = len;
+    }
+    // padding kecil; cap biar 1 sel panjang tidak merusak layout
+    return Math.min(Math.max(maxLen + 2, 3), 42);
+  });
+}
+
 /** Header dipotong per kata dengan <br> seperti wakaka2. */
 function formatHeaderHTML(colName: string): string {
   const words = colName.trim().split(/\s+/).filter(Boolean);
@@ -83,6 +103,11 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
         };
       }),
     [totalChunks, chunkSize, filtered.length]
+  );
+
+  const colWidths = useMemo(
+    () => measureColWidths(sheet.headers, filtered),
+    [sheet.headers, filtered]
   );
 
   function onSearchChange(v: string) {
@@ -171,14 +196,21 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
           </span>
         </div>
 
-        <table className="locked-table w-full border-collapse text-xs">
+        <table className="locked-table border-collapse text-xs">
           <colgroup>
-            {sheet.headers.map((h, i) => (
-              <col
-                key={i}
-                style={{ width: isUraianInformasiColumn(h) ? "auto" : "1%" }}
-              />
-            ))}
+            {sheet.headers.map((h, i) => {
+              const w = colWidths[i];
+              return (
+                <col
+                  key={i}
+                  style={
+                    w == null
+                      ? { width: "auto", minWidth: "12rem" }
+                      : { width: `${w}ch`, maxWidth: `${w}ch` }
+                  }
+                />
+              );
+            })}
           </colgroup>
           <thead
             className="sticky z-20"
@@ -189,14 +221,16 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                 isUraianInformasiColumn(h) ? (
                   <th
                     key={i}
-                    className="border border-slate-300 bg-slate-100 px-3 py-2.5 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                    className="border border-slate-300 bg-slate-100 px-3 py-2.5 text-left align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
                   >
                     {h}
                   </th>
                 ) : (
                   <th
                     key={i}
-                    className="col-fixed-header border border-slate-300 bg-slate-100 px-2 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                    className={`col-fixed-header border border-slate-300 bg-slate-100 px-2 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]${
+                      h.trim().split(/\s+/).length > 1 ? " col-header-wrap" : ""
+                    }`}
                     dangerouslySetInnerHTML={{ __html: formatHeaderHTML(h) }}
                   />
                 )
@@ -223,6 +257,7 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                     return (
                       <td
                         key={ci}
+                        title={isUraian ? undefined : String(cellVal)}
                         className={
                           isUraian
                             ? "col-flexible-main border border-slate-200 px-3 py-2 align-top text-left text-xs text-slate-800"

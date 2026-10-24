@@ -36,30 +36,42 @@ body {
 
 .locked-table {
   table-layout: auto !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  width: max-content !important;
+  min-width: 100% !important;
   border-collapse: collapse !important;
 }
 
+/* Kolom padat: lebar ikut isi, jangan melebar isi ruang sisa */
 .col-fixed-header {
-  white-space: normal !important;
+  white-space: nowrap !important;
   word-break: keep-all !important;
   overflow-wrap: normal !important;
   box-sizing: border-box !important;
   line-height: 1.25 !important;
+  width: 1% !important;
+}
+
+.col-fixed-header.col-header-wrap {
+  white-space: normal !important;
 }
 
 .col-fixed-body {
-  white-space: normal !important;
-  word-break: break-word !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
   box-sizing: border-box !important;
+  width: 1% !important;
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Kolom uraian: ambil sisa ruang */
 .col-flexible-main {
   white-space: normal !important;
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   box-sizing: border-box !important;
+  min-width: 12rem;
 }
 
 .search-highlight {
