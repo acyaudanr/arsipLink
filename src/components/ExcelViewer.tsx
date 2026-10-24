@@ -78,7 +78,7 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
   }
 
   return (
-    <div className="flex h-[78vh] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       {/* Banner judul dokumen (baris di atas header Excel) */}
       {sheet.titles.length > 0 && (
         <div className="shrink-0 space-y-0.5 border-b border-slate-200 bg-slate-50 px-4 py-3">

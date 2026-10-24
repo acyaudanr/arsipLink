@@ -62,6 +62,7 @@ export default async function DashboardPage({
   }));
 
   return (
+    <div className="h-full overflow-y-auto">
     <div className="mx-auto w-full max-w-[1280px] px-5 py-10">
       <div className="mb-8 max-w-2xl">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a91a0]">
@@ -144,6 +145,7 @@ export default async function DashboardPage({
           ))}
         </ul>
       )}
+    </div>
     </div>
   );
 }

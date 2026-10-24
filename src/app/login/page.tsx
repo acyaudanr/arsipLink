@@ -30,7 +30,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center px-4">
+    <div className="grid h-full place-items-center px-4">
       <div className="w-full max-w-[400px]">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 grid size-11 place-items-center rounded-md bg-[#0c1222] font-display text-sm font-bold text-white">

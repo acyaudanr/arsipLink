@@ -48,6 +48,8 @@ export default function AppHeader({
               onSheetChange={preview.onSheetChange}
               sheetsLoading={preview.sheetsLoading}
               onFolderSelect={(folderId) => router.push(`/?folder=${folderId}`)}
+              onSync={preview.onSync}
+              syncing={preview.syncing}
             />
           </div>
 

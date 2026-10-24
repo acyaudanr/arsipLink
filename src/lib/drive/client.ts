@@ -234,8 +234,18 @@ async function downloadDriveFileAnonymous(fileId: string): Promise<DriveFileData
   );
 }
 
-export async function getParsedDriveFile(fileId: string) {
+export function invalidateWorkbookCache(fileId?: string) {
+  if (fileId) workbookCache.delete(fileId);
+  else workbookCache.clear();
+}
+
+export async function getParsedDriveFile(
+  fileId: string,
+  opts?: { fresh?: boolean }
+) {
   const { parseExcelBuffer } = await import("@/lib/excel/parse");
+
+  if (opts?.fresh) workbookCache.delete(fileId);
 
   const cached = workbookCache.get(fileId);
   if (cached && cached.expiresAt > Date.now()) {

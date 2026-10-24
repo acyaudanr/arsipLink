@@ -40,6 +40,7 @@ export default async function FolderDetailPage({
   }
 
   return (
+    <div className="h-full overflow-y-auto">
     <div className="mx-auto w-full max-w-[1280px] px-5 py-8">
       <Link
         href="/"
@@ -78,6 +79,7 @@ export default async function FolderDetailPage({
       </div>
 
       <FolderFileList files={list} isAdmin={isAdmin} folderId={f.id} />
+    </div>
     </div>
   );
 }

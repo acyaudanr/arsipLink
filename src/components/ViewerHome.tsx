@@ -33,7 +33,7 @@ export default function ViewerHome({
   }, [folders, currentFolder, files, sheets, activeSheet, setViewerPreview]);
 
   return (
-    <div className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-5 py-16">
+    <div className="flex h-full min-h-0 items-center justify-center px-5 py-16">
       <div className="max-w-md text-center">
         <p className="font-display text-xl text-[#0c1222]">Pilih file</p>
         <p className="mt-2 text-sm text-[#6b7285]">

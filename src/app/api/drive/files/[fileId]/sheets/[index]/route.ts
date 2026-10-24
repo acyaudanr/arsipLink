@@ -7,7 +7,7 @@ export const maxDuration = 120;
 
 /** Isi satu sheet lengkap untuk viewer (dari cache memori server / Drive). */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ fileId: string; index: string }> }
 ) {
   const { fileId, index } = await params;
@@ -19,7 +19,8 @@ export async function GET(
     );
   }
   try {
-    const file = await getParsedDriveFile(fileId);
+    const fresh = new URL(request.url).searchParams.get("fresh") === "1";
+    const file = await getParsedDriveFile(fileId, { fresh });
     const sheet = file.sheets[Number(index)];
     if (!sheet) return NextResponse.json({ error: "Sheet tidak ditemukan" }, { status: 404 });
     return NextResponse.json(sheet);

@@ -7,7 +7,7 @@ export const maxDuration = 120;
 
 /** Info file + daftar sheet (isi dibaca langsung dari Drive, tidak disimpan). */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
   const { fileId } = await params;
@@ -19,7 +19,8 @@ export async function GET(
     );
   }
   try {
-    const file = await getParsedDriveFile(fileId);
+    const fresh = new URL(request.url).searchParams.get("fresh") === "1";
+    const file = await getParsedDriveFile(fileId, { fresh });
     return NextResponse.json({
       name: file.name,
       modifiedTime: file.modifiedTime,

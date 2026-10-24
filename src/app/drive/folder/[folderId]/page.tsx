@@ -16,10 +16,12 @@ export default async function DriveFolderPage({
   const title = sp.title ?? "Folder Drive";
 
   return (
-    <div className="w-full px-4 py-6">
-      <Link href="/" className="text-sm text-gray-500 hover:text-emerald-700">← Kembali ke daftar link Drive</Link>
-      <h1 className="mb-4 mt-2 text-2xl font-bold">📁 {title}</h1>
-      <FolderBrowser initialFolderId={folderId} rootFolderId={root} rootTitle={title} />
+    <div className="h-full overflow-y-auto">
+      <div className="w-full px-4 py-6">
+        <Link href="/" className="text-sm text-gray-500 hover:text-emerald-700">← Kembali ke daftar link Drive</Link>
+        <h1 className="mb-4 mt-2 text-2xl font-bold">📁 {title}</h1>
+        <FolderBrowser initialFolderId={folderId} rootFolderId={root} rootTitle={title} />
+      </div>
     </div>
   );
 }

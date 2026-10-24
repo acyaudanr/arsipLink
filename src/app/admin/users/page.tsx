@@ -26,6 +26,7 @@ export default async function AdminUsersPage() {
   }
 
   return (
+    <div className="h-full overflow-y-auto">
     <div className="mx-auto max-w-[960px] px-5 py-10">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a91a0]">
         Administrasi
@@ -42,6 +43,7 @@ export default async function AdminUsersPage() {
         accessByUser={accessByUser}
         currentUserId={profile.id}
       />
+    </div>
     </div>
   );
 }

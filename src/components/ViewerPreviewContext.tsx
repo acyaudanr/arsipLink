@@ -13,6 +13,8 @@ export type ViewerPreviewControls = {
   activeSheet: number;
   sheetsLoading: boolean;
   onSheetChange: (index: number) => void;
+  onSync?: () => void;
+  syncing?: boolean;
 };
 
 const ViewerPreviewContext = createContext<ViewerPreviewControls | null>(null);

@@ -26,6 +26,8 @@ export default function PreviewSelectors({
   compact = false,
   requireFilePick = false,
   onFolderSelect,
+  onSync,
+  syncing = false,
 }: {
   folders: DriveFolder[];
   currentFolder: DriveFolder | null;
@@ -38,6 +40,8 @@ export default function PreviewSelectors({
   compact?: boolean;
   requireFilePick?: boolean;
   onFolderSelect?: (folderId: string) => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }) {
   const router = useRouter();
   /** Update label file langsung tanpa nunggu navigasi selesai */
@@ -148,21 +152,50 @@ export default function PreviewSelectors({
         maxCh={compact ? 48 : 72}
       />
 
-      <SearchableSelect
-        label="Pilih tab / sheet"
-        compact={compact}
-        value={sheetValue}
-        options={sheetOptions}
-        onChange={(v) => {
-          if (v === "") return;
-          onSheetChange(Number(v));
-        }}
-        disabled={sheetsLoading || sheets.length === 0}
-        placeholder="Pilih sheet"
-        searchPlaceholder="Cari sheet…"
-        minCh={14}
-        maxCh={compact ? 36 : 48}
-      />
+      <div className="flex items-end gap-1.5">
+        <SearchableSelect
+          label="Pilih tab / sheet"
+          compact={compact}
+          value={sheetValue}
+          options={sheetOptions}
+          onChange={(v) => {
+            if (v === "") return;
+            onSheetChange(Number(v));
+          }}
+          disabled={sheetsLoading || sheets.length === 0}
+          placeholder="Pilih sheet"
+          searchPlaceholder="Cari sheet…"
+          minCh={14}
+          maxCh={compact ? 36 : 48}
+        />
+        {onSync && currentFileId ? (
+          <button
+            type="button"
+            title="Sinkronkan ulang dari Google Drive"
+            aria-label="Sinkronkan data"
+            disabled={syncing || sheetsLoading}
+            onClick={onSync}
+            className={`mb-0.5 grid shrink-0 place-items-center rounded-lg border border-[#e0e3ea] bg-white text-[#3d4454] transition hover:border-[#1f6b5a] hover:text-[#1f6b5a] disabled:cursor-not-allowed disabled:opacity-50 ${
+              compact ? "size-8" : "size-9"
+            }`}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              className={syncing ? "animate-spin" : undefined}
+            >
+              <path d="M21 12a9 9 0 0 1-14.5 7.1" />
+              <path d="M3 12a9 9 0 0 1 14.5-7.1" />
+              <path d="M21 3v6h-6" />
+              <path d="M3 21v-6h6" />
+            </svg>
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

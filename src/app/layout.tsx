@@ -26,11 +26,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const profile = await getCurrentProfile();
 
   return (
-    <html lang="id" className={`${sans.variable} ${display.variable}`}>
-      <body className="min-h-screen font-[family-name:var(--font-sans)] antialiased">
+    <html lang="id" className={`h-dvh ${sans.variable} ${display.variable}`}>
+      <body className="flex h-dvh flex-col overflow-hidden font-[family-name:var(--font-sans)] antialiased">
         <ViewerPreviewProvider>
           {profile && <AppHeader email={profile.email} role={profile.role} />}
-          <main>{children}</main>
+          <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
         </ViewerPreviewProvider>
       </body>
     </html>
