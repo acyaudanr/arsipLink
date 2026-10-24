@@ -109,11 +109,13 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
             className="w-full rounded-lg border border-slate-300 py-2 pl-3 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
-        <div className="w-[120px] shrink-0">
+        <div className="flex shrink-0 items-end gap-3">
           <SearchableSelect
             compact
             label="Baris / bagian"
             value={String(chunkSize)}
+            minCh={14}
+            maxCh={18}
             options={CHUNK_OPTIONS.map((n) => ({
               value: String(n),
               label: String(n),
@@ -121,13 +123,13 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
             onChange={(v) => onChunkSizeChange(Number(v))}
             searchPlaceholder="Cari…"
           />
-        </div>
-        <div className="w-[200px] shrink-0">
           <SearchableSelect
             compact
             label="Bagian"
             value={String(safeChunk)}
             disabled={totalChunks <= 1}
+            minCh={10}
+            maxCh={16}
             options={Array.from({ length: totalChunks }, (_, i) => {
               const s = i * chunkSize + 1;
               const e = Math.min((i + 1) * chunkSize, filtered.length);

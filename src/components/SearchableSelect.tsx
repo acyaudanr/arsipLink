@@ -77,10 +77,12 @@ export default function SearchableSelect({
     const labels = [
       selected?.label ?? placeholder,
       ...options.map((o) => o.label),
+      // label atas ikut dihitung supaya tidak numpuk dengan select tetangga
+      ...(label ? [label] : []),
     ];
     const longest = labels.reduce((m, s) => Math.max(m, s.length), 0);
     return clamp(longest + 2, minCh, maxCh);
-  }, [options, selected, placeholder, minCh, maxCh]);
+  }, [options, selected, placeholder, label, minCh, maxCh]);
 
   useEffect(() => {
     if (!open) return;
