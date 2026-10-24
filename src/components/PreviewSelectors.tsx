@@ -107,18 +107,31 @@ export default function PreviewSelectors({
     return list.filter((o) => o.value);
   }, [files, requireFilePick, currentFileId]);
 
+  /** Jangan ganti opsi jadi "Memuat…" saat sudah ada daftar — biar label tetap jalan */
   const sheetOptions = useMemo(() => {
+    if (sheets.length > 0) {
+      return sheets.map((s) => ({
+        value: String(s.index),
+        label: `Tab ${s.index + 1}: ${s.sheetName}`,
+        hint: `${s.rowCount.toLocaleString("id-ID")} baris`,
+      }));
+    }
     if (sheetsLoading) return [{ value: "", label: "Memuat sheet..." }];
-    if (sheets.length === 0) return [{ value: "", label: "Tidak ada sheet" }];
-    return sheets.map((s) => ({
-      value: String(s.index),
-      label: `Tab ${s.index + 1}: ${s.sheetName}`,
-      hint: `${s.rowCount.toLocaleString("id-ID")} baris`,
-    }));
+    return [{ value: "", label: "Tidak ada sheet" }];
   }, [sheets, sheetsLoading]);
 
+  const [pendingSheet, setPendingSheet] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPendingSheet(null);
+  }, [activeSheet, currentFileId]);
+
   const sheetValue =
-    sheetsLoading || sheets.length === 0 ? "" : String(activeSheet);
+    pendingSheet !== null
+      ? pendingSheet
+      : sheets.length === 0
+        ? ""
+        : String(activeSheet);
 
   return (
     <div
@@ -154,15 +167,17 @@ export default function PreviewSelectors({
 
       <div className="flex items-end gap-1.5">
         <SearchableSelect
+          key={`sheet-${currentFileId}`}
           label="Pilih tab / sheet"
           compact={compact}
           value={sheetValue}
           options={sheetOptions}
           onChange={(v) => {
             if (v === "") return;
+            setPendingSheet(v);
             onSheetChange(Number(v));
           }}
-          disabled={sheetsLoading || sheets.length === 0}
+          disabled={sheets.length === 0}
           placeholder="Pilih sheet"
           searchPlaceholder="Cari sheet…"
           minCh={14}

@@ -48,19 +48,21 @@ export default function SearchableSelect({
   const [optimistic, setOptimistic] = useState<SearchableOption | null>(null);
 
   const selectedFromProps = options.find((o) => o.value === value) ?? null;
-  const selected =
-    optimistic && optimistic.value === value
-      ? optimistic
-      : optimistic && !selectedFromProps
-        ? optimistic
-        : selectedFromProps ?? optimistic;
+  // Optimistic menang dulu supaya label ganti instan (jangan nunggu prop value)
+  const selected = optimistic ?? selectedFromProps;
 
   useEffect(() => {
-    // Sinkron: kalau value dari luar sudah sama dengan optimistic, lepas optimistic
-    if (optimistic && optimistic.value === value) {
+    if (!optimistic) return;
+    // Parent sudah ikut → lepas
+    if (optimistic.value === value) {
+      setOptimistic(null);
+      return;
+    }
+    // Opsi sudah tidak ada (ganti file, dll.) → lepas
+    if (!options.some((o) => o.value === optimistic.value)) {
       setOptimistic(null);
     }
-  }, [value, optimistic]);
+  }, [value, optimistic, options]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -73,12 +75,18 @@ export default function SearchableSelect({
     );
   }, [options, query]);
 
-  // Lebar trigger = teks yang tampil (bukan opsi terpanjang), supaya tidak ke-potong
+  // Lebar dari data terlebar di opsi (bukan nunggu dipilih dulu)
   const triggerCh = useMemo(() => {
-    const shown = selected?.label ?? placeholder;
-    const n = Math.max(shown.length, label?.length ?? 0);
-    return clamp(n + 3, minCh, maxCh);
-  }, [selected, placeholder, label, minCh, maxCh]);
+    let longest = Math.max(
+      (selected?.label ?? placeholder).length,
+      label?.length ?? 0,
+      placeholder.length
+    );
+    for (const o of options) {
+      if (o.label.length > longest) longest = o.label.length;
+    }
+    return clamp(longest + 3, minCh, maxCh);
+  }, [options, selected, placeholder, label, minCh, maxCh]);
 
   useEffect(() => {
     if (!open) return;
