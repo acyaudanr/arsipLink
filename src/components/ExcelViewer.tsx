@@ -12,24 +12,27 @@ function isUraianInformasiColumn(name: string): boolean {
 }
 
 type ColSize = {
-  /** Lebar target (ch); null = kolom fleksibel (uraian) */
+  /** Lebar target / max (ch); null = kolom fleksibel (uraian) */
   ch: number | null;
+  /** Floor supaya header tidak pecah per huruf */
+  minCh: number;
   /** Isi > 40 karakter → body wrap, lebar dibatasi */
   canGrowBody: boolean;
-  /** Header lebih panjang dari lebar isi → header wrap */
+  /** Header lebih panjang dari lebar isi → header wrap per kata */
   canGrowHeader: boolean;
   /** Kolom sempit: jangan serap sisa lebar tabel */
   tight: boolean;
 };
 
-/** Isi di atas ini → body canGrow. */
 const CONTENT_GROW_AT = 40;
+/** Lebar max untuk kolom isi panjang (jangan mendominasi tabel). */
+const LONG_COL_MAX_CH = 28;
+/** Floor lebar saat header di-wrap (muat kata, bukan huruf). */
+const HEADER_WRAP_MIN_CH = 8;
 
 /**
- * Autofit dari ISI, bukan dari panjang header.
- * - Isi pendek → kolom sempit (tight), header panjang di-wrap
- * - Isi > 40 → body wrap, lebar dibatasi supaya tidak makan semua ruang
- * - Sisa lebar tabel hanya ke kolom fleksibel / canGrowBody
+ * Autofit dari isi; header panjang di-wrap per kata.
+ * Min-width dijaga agar header tidak vertikal per huruf.
  */
 function measureColWidths(
   headers: string[],
@@ -39,7 +42,13 @@ function measureColWidths(
   const sample = rows.length > sampleLimit ? rows.slice(0, sampleLimit) : rows;
   return headers.map((h, i) => {
     if (isUraianInformasiColumn(h)) {
-      return { ch: null, canGrowBody: true, canGrowHeader: true, tight: false };
+      return {
+        ch: null,
+        minCh: 12,
+        canGrowBody: true,
+        canGrowHeader: true,
+        tight: false,
+      };
     }
 
     const headerText = h.replace(/\s+/g, " ").trim();
@@ -55,24 +64,38 @@ function measureColWidths(
 
     const canGrowBody = contentMax > CONTENT_GROW_AT;
 
-    // Lebar inti = isi saja (kosong → sangat sempit)
+    // Lebar dari isi
     let ch = Math.max(contentMax + 2, 3);
     if (canGrowBody) {
-      // Batasi lebar kolom panjang; teks wrap di dalam
-      ch = Math.min(Math.max(contentMax + 2, CONTENT_GROW_AT), 36);
+      ch = Math.min(Math.max(CONTENT_GROW_AT, 16), LONG_COL_MAX_CH);
     }
 
-    // Header lebih panjang dari lebar isi → wrap header, min = kata terpanjang
     let canGrowHeader = false;
+    let minCh = Math.max(contentMax + 1, 3);
+
     if (headerLen + 2 > ch) {
+      // Wrap header per kata — floor = kata terpanjang (cap wajar)
       canGrowHeader = true;
-      ch = Math.max(ch, Math.min(longestWord + 1, 12));
+      const wordFloor = Math.min(Math.max(longestWord + 1, HEADER_WRAP_MIN_CH), 14);
+      minCh = Math.max(minCh, wordFloor);
+      ch = Math.max(ch, wordFloor);
     } else {
+      // Header muat 1 baris
       ch = Math.max(ch, headerLen + 2);
+      minCh = Math.max(minCh, headerLen + 2);
     }
 
-    const tight = !canGrowBody;
-    return { ch: Math.min(ch, 40), canGrowBody, canGrowHeader, tight };
+    if (canGrowBody) {
+      ch = Math.min(ch, LONG_COL_MAX_CH);
+    }
+
+    return {
+      ch: Math.min(ch, 40),
+      minCh: Math.min(minCh, ch),
+      canGrowBody,
+      canGrowHeader,
+      tight: !canGrowBody,
+    };
   });
 }
 
@@ -241,10 +264,12 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                 key={i}
                 style={
                   col.ch == null
-                    ? { width: "auto" }
-                    : col.tight
-                      ? { width: "1%", maxWidth: `${col.ch}ch` }
-                      : { width: `${col.ch}ch`, maxWidth: `${col.ch}ch` }
+                    ? { width: "auto", minWidth: `${col.minCh}ch` }
+                    : {
+                        width: col.tight ? "1%" : `${col.ch}ch`,
+                        minWidth: `${col.minCh}ch`,
+                        maxWidth: `${col.ch}ch`,
+                      }
                 }
               />
             ))}
@@ -258,13 +283,15 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                 const col = colWidths[i];
                 const isUraian = isUraianInformasiColumn(h);
                 const wrapHeader = col?.canGrowHeader ?? false;
-                const maxCh = col?.ch;
                 return (
                   <th
                     key={i}
                     style={
-                      !isUraian && maxCh != null
-                        ? { maxWidth: `${maxCh}ch`, width: col?.tight ? "1%" : `${maxCh}ch` }
+                      col
+                        ? {
+                            minWidth: `${col.minCh}ch`,
+                            maxWidth: col.ch != null ? `${col.ch}ch` : undefined,
+                          }
                         : undefined
                     }
                     className={
@@ -300,14 +327,16 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                     const col = colWidths[ci];
                     const isUraian = isUraianInformasiColumn(h);
                     const canGrowBody = col?.canGrowBody ?? false;
-                    const maxCh = col?.ch;
                     return (
                       <td
                         key={ci}
                         title={isUraian || canGrowBody ? undefined : String(cellVal)}
                         style={
-                          !isUraian && maxCh != null
-                            ? { maxWidth: `${maxCh}ch`, width: col?.tight ? "1%" : undefined }
+                          col
+                            ? {
+                                minWidth: `${col.minCh}ch`,
+                                maxWidth: col.ch != null ? `${col.ch}ch` : undefined,
+                              }
                             : undefined
                         }
                         className={

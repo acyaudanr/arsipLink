@@ -36,12 +36,11 @@ body {
 
 .locked-table {
   table-layout: auto !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  width: max-content !important;
+  min-width: 100% !important;
   border-collapse: collapse !important;
 }
 
-/* Kolom sempit: width 1% + maxWidth di cell → tidak serap sisa ruang */
 .col-fixed-header {
   white-space: nowrap !important;
   word-break: keep-all !important;
@@ -50,32 +49,26 @@ body {
   line-height: 1.25 !important;
 }
 
-/* Header panjang + isi pendek: wrap, kolom tetap sempit */
+/* Wrap per kata saja — jangan putus per huruf (hindari header vertikal) */
 .col-fixed-header.col-header-cangrow {
   white-space: normal !important;
-  word-break: break-word !important;
-  overflow-wrap: anywhere !important;
-  line-height: 1.15 !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.2 !important;
 }
 
 .col-fixed-body {
   white-space: nowrap !important;
   word-break: normal !important;
   box-sizing: border-box !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Isi > 40 karakter: wrap, lebar dibatasi (jangan mendominasi tabel) */
 .col-fixed-body.col-cangrow {
   white-space: normal !important;
   word-break: break-word !important;
   overflow-wrap: break-word !important;
-  overflow: visible !important;
-  text-overflow: unset !important;
 }
 
-/* Kolom uraian / fleksibel: ambil sisa ruang */
 .col-flexible-main {
   white-space: normal !important;
   word-break: break-word !important;
