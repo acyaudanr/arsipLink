@@ -225,15 +225,23 @@ export default function SearchableSelect({
                       aria-selected={active}
                       onMouseEnter={() => setHighlight(i)}
                       onClick={() => pick(opt.value)}
-                      className={`w-full px-3 py-2 text-left transition ${
-                        hi ? "bg-[#f4f5f7]" : "bg-white"
-                      } ${active ? "bg-[#f0faf6] font-semibold text-[#0c1222]" : "font-medium text-[#0c1222]"}`}
+                      className={`w-full border-l-[3px] px-3 py-2 text-left transition ${
+                        active
+                          ? "border-l-[#1f6b5a] bg-[#e8f5f0] font-semibold text-[#1f6b5a]"
+                          : hi
+                            ? "border-l-transparent bg-[#f4f5f7] font-medium text-[#0c1222]"
+                            : "border-l-transparent bg-white font-medium text-[#0c1222]"
+                      }`}
                     >
                       <span className="block whitespace-normal break-words text-sm leading-snug">
                         {opt.label}
                       </span>
                       {opt.hint ? (
-                        <span className="mt-0.5 block whitespace-normal break-words text-[11px] font-normal text-[#8a91a0]">
+                        <span
+                          className={`mt-0.5 block whitespace-normal break-words text-[11px] font-normal ${
+                            active ? "text-[#4a8f7f]" : "text-[#8a91a0]"
+                          }`}
+                        >
                           {opt.hint}
                         </span>
                       ) : null}
