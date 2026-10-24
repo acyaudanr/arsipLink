@@ -134,11 +134,7 @@ export default function PreviewSelectors({
         : String(activeSheet);
 
   return (
-    <div
-      className={`flex max-w-full flex-wrap items-end gap-3 ${
-        compact ? "w-fit justify-center" : "w-full justify-start"
-      }`}
-    >
+    <div className="flex w-fit max-w-full flex-wrap items-end justify-center gap-3">
       <SearchableSelect
         label="Pilih folder"
         compact={compact}
