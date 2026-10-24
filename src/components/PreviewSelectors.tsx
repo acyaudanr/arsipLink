@@ -134,7 +134,7 @@ export default function PreviewSelectors({
         : String(activeSheet);
 
   return (
-    <div className="flex flex-nowrap items-end justify-center gap-2 sm:gap-3">
+    <div className="flex w-full min-w-0 flex-nowrap items-end justify-center gap-2 sm:gap-3">
       <SearchableSelect
         label="Pilih folder"
         compact={compact}
@@ -145,20 +145,21 @@ export default function PreviewSelectors({
         onChange={onFolderChange}
         placeholder="Pilih folder"
         searchPlaceholder="Cari folder…"
-        minCh={12}
-        maxCh={compact ? 22 : 28}
+        minCh={14}
+        maxCh={compact ? 24 : 30}
       />
 
       <SearchableSelect
         label="Pilih file"
         compact={compact}
+        fill
         value={resolvedFileId}
         options={fileOptions}
         onChange={onFileChange}
         placeholder="Pilih file"
         searchPlaceholder="Cari file…"
-        minCh={16}
-        maxCh={compact ? 36 : 42}
+        minCh={18}
+        maxCh={72}
       />
 
       <div className="flex shrink-0 items-end gap-1.5">
@@ -176,8 +177,8 @@ export default function PreviewSelectors({
           disabled={sheets.length === 0}
           placeholder="Pilih sheet"
           searchPlaceholder="Cari sheet…"
-          minCh={12}
-          maxCh={compact ? 28 : 32}
+          minCh={14}
+          maxCh={compact ? 30 : 34}
         />
         {onSync && currentFileId ? (
           <button

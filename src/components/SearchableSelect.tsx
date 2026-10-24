@@ -24,6 +24,7 @@ export default function SearchableSelect({
   emptyText = "Tidak ada hasil",
   minCh = 14,
   maxCh = 36,
+  fill = false,
 }: {
   label?: string;
   value: string;
@@ -37,6 +38,8 @@ export default function SearchableSelect({
   /** Lebar trigger mengikuti panjang label (ch) */
   minCh?: number;
   maxCh?: number;
+  /** Isi sisa ruang flex (satu baris nav lebar) */
+  fill?: boolean;
 }) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -140,7 +143,11 @@ export default function SearchableSelect({
   const displayValue = selected?.value ?? value;
 
   return (
-    <div className="relative shrink-0" ref={rootRef} style={{ width: `${triggerCh}ch` }}>
+    <div
+      className={`relative ${fill ? "min-w-0 flex-1" : "shrink-0"}`}
+      ref={rootRef}
+      style={fill ? undefined : { width: `${triggerCh}ch` }}
+    >
       {label ? <span className={labelCls}>{label}</span> : null}
       <button
         type="button"
@@ -184,15 +191,14 @@ export default function SearchableSelect({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-0 z-50 mt-1.5 overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
+          className="absolute left-0 z-50 mt-1.5 w-full min-w-full overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
           style={{
-            width: "max-content",
-            minWidth: "100%",
+            width: "max(100%, max-content)",
             maxWidth: "min(92vw, 42rem)",
           }}
         >
-          <div className="border-b border-[#eef0f4] p-2">
-            <div className="relative">
+          <div className="w-full border-b border-[#eef0f4] p-2">
+            <div className="relative w-full">
               <svg
                 width="14"
                 height="14"
@@ -211,7 +217,7 @@ export default function SearchableSelect({
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onSearchKey}
                 placeholder={searchPlaceholder}
-                className="w-full rounded-lg border border-[#e8eaef] bg-[#fafaf8] py-2 pl-8 pr-3 text-sm text-[#0c1222] outline-none placeholder:text-[#a0a6b4] focus:border-[#1f6b5a] focus:bg-white focus:ring-2 focus:ring-[#1f6b5a]/12"
+                className="box-border w-full min-w-0 rounded-lg border border-[#e8eaef] bg-[#fafaf8] py-2 pl-8 pr-3 text-sm text-[#0c1222] outline-none placeholder:text-[#a0a6b4] focus:border-[#1f6b5a] focus:bg-white focus:ring-2 focus:ring-[#1f6b5a]/12"
               />
             </div>
           </div>
