@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import SearchableSelect from "@/components/SearchableSelect";
 import type { ParsedSheet } from "@/lib/types";
 
 const CHUNK_OPTIONS = [100, 250, 500, 1000, 2000];
@@ -108,39 +109,38 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
             className="w-full rounded-lg border border-slate-300 py-2 pl-3 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
-        <label className="flex items-center gap-2 text-xs text-slate-500">
-          Baris / bagian
-          <select
-            value={chunkSize}
-            onChange={(e) => onChunkSizeChange(Number(e.target.value))}
-            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
-          >
-            {CHUNK_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-xs text-slate-500">
-          Bagian
-          <select
-            value={safeChunk}
-            onChange={(e) => setChunkIndex(Number(e.target.value))}
-            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
+        <div className="w-[120px] shrink-0">
+          <SearchableSelect
+            compact
+            label="Baris / bagian"
+            value={String(chunkSize)}
+            options={CHUNK_OPTIONS.map((n) => ({
+              value: String(n),
+              label: String(n),
+            }))}
+            onChange={(v) => onChunkSizeChange(Number(v))}
+            searchPlaceholder="Cari…"
+          />
+        </div>
+        <div className="w-[200px] shrink-0">
+          <SearchableSelect
+            compact
+            label="Bagian"
+            value={String(safeChunk)}
             disabled={totalChunks <= 1}
-          >
-            {Array.from({ length: totalChunks }, (_, i) => {
+            options={Array.from({ length: totalChunks }, (_, i) => {
               const s = i * chunkSize + 1;
               const e = Math.min((i + 1) * chunkSize, filtered.length);
-              return (
-                <option key={i} value={i}>
-                  {s}–{e} dari {filtered.length.toLocaleString("id-ID")}
-                </option>
-              );
+              return {
+                value: String(i),
+                label: `${s}–${e}`,
+                hint: `dari ${filtered.length.toLocaleString("id-ID")}`,
+              };
             })}
-          </select>
-        </label>
+            onChange={(v) => setChunkIndex(Number(v))}
+            searchPlaceholder="Cari bagian…"
+          />
+        </div>
         <span className="text-xs text-slate-400">
           {filtered.length.toLocaleString("id-ID")} baris
           {search.trim() ? " cocok" : ""} • tampil {startIdx + 1}–{endIdx || 0}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import SearchableSelect from "@/components/SearchableSelect";
 import type { DriveFolder } from "@/lib/types";
 
 interface Props {
@@ -210,21 +211,19 @@ export default function UploadModal({ open, onClose }: Props) {
             </div>
 
             {mode === "existing" ? (
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-[#0c1222]">Nama folder</label>
-                <select
-                  value={folderId}
-                  onChange={(e) => setFolderId(e.target.value)}
-                  className="w-full rounded-xl border border-[#e0e3ea] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15"
-                >
-                  {folders.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                      {typeof f.file_count === "number" ? ` (${f.file_count} file)` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                label="Nama folder"
+                value={folderId}
+                onChange={setFolderId}
+                placeholder="Pilih folder"
+                searchPlaceholder="Cari folder…"
+                options={folders.map((f) => ({
+                  value: f.id,
+                  label: f.name,
+                  hint:
+                    typeof f.file_count === "number" ? `${f.file_count} file` : undefined,
+                }))}
+              />
             ) : (
               <div className="space-y-3">
                 <div>
