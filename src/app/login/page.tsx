@@ -6,35 +6,21 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setMessage(null);
     const supabase = createClient();
     try {
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        router.push("/");
-        router.refresh();
-      } else {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        if (data.session) {
-          router.push("/");
-          router.refresh();
-        } else {
-          setMessage("Akun dibuat. Kalau diminta konfirmasi email, cek inbox lalu login.");
-        }
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      router.push("/");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
@@ -54,22 +40,7 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-2xl border border-[#e8eaef] bg-white p-6 shadow-[0_20px_50px_-28px_rgba(12,18,34,0.35)]">
-          <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-[#f4f5f7] p-1 text-sm">
-            <button
-              type="button"
-              onClick={() => setMode("login")}
-              className={`rounded-lg py-2 font-medium ${mode === "login" ? "bg-white text-[#0c1222] shadow-sm" : "text-[#6b7285]"}`}
-            >
-              Masuk
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("register")}
-              className={`rounded-lg py-2 font-medium ${mode === "register" ? "bg-white text-[#0c1222] shadow-sm" : "text-[#6b7285]"}`}
-            >
-              Daftar
-            </button>
-          </div>
+          <h2 className="mb-5 text-center text-sm font-semibold text-[#0c1222]">Masuk</h2>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
@@ -98,21 +69,16 @@ export default function LoginPage() {
             {error && (
               <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
             )}
-            {message && (
-              <p className="rounded-xl border border-[#cfe8df] bg-[#f0faf6] px-3 py-2 text-sm text-[#1f6b5a]">
-                {message}
-              </p>
-            )}
             <button
               disabled={loading}
               className="w-full rounded-xl bg-[#0c1222] py-2.5 text-sm font-semibold text-white hover:bg-[#1a2236] disabled:opacity-60"
             >
-              {loading ? "Memproses..." : mode === "login" ? "Masuk" : "Buat akun"}
+              {loading ? "Memproses..." : "Masuk"}
             </button>
           </form>
         </div>
         <p className="mt-5 text-center text-xs text-[#8a91a0]">
-          Akun baru otomatis Viewer. Admin yang menaikkan role.
+          Akun Viewer dibuat oleh Administrator.
         </p>
       </div>
     </div>

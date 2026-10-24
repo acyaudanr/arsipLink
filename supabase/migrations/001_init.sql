@@ -3,9 +3,10 @@
 -- File ini disimpan sebagai dokumentasi / untuk setup ulang.
 --
 -- Cara jadi Admin pertama:
---   1. Daftar akun lewat halaman /login di website
+--   1. Buat user di Supabase Auth (Dashboard) atau lewat SQL
 --   2. Jalankan di SQL Editor Supabase:
 --      update public.profiles set role = 'admin' where email = 'email-kamu@contoh.com';
+--   Viewer baru dibuat dari halaman /admin/users (bukan dari /login).
 
 create type public.user_role as enum ('admin','viewer');
 create type public.source_type as enum ('upload','drive');

@@ -40,7 +40,7 @@ export default async function DashboardPage() {
         <p className="mt-2 text-[15px] leading-relaxed text-[#6b7285]">
           {isAdmin
             ? "Buka folder untuk melihat file Drive di dalamnya. Tambah folder atau link lewat tombol Upload di pojok kanan atas."
-            : "Pilih folder untuk melihat daftar file. Akses kamu hanya untuk melihat."}
+            : "Pilih folder yang diizinkan Administrator. Akses kamu hanya untuk melihat."}
         </p>
       </div>
 
@@ -50,7 +50,7 @@ export default async function DashboardPage() {
           <p className="mx-auto mt-2 max-w-md text-sm text-[#6b7285]">
             {isAdmin
               ? "Klik Upload di navigasi atas, buat folder baru, lalu tempel link Google Drive."
-              : "Minta Administrator mendaftarkan folder terlebih dahulu."}
+              : "Belum ada folder yang diizinkan untuk akunmu. Minta Administrator mengatur akses."}
           </p>
         </div>
       ) : (

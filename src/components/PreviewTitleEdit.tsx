@@ -41,16 +41,6 @@ export default function PreviewTitleEdit({
       {description ? (
         <p className="mt-1 text-sm text-[#6b7285]">{description}</p>
       ) : null}
-      <p className="mt-2 text-sm text-[#6b7285]">
-        <a
-          href={driveUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-[#1f6b5a] hover:underline"
-        >
-          Buka di Google Drive ↗
-        </a>
-      </p>
 
       {documentId && (
         <EditFileModal

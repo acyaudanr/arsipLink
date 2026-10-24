@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import DrivePreviewShell from "@/components/DrivePreviewShell";
@@ -18,12 +18,16 @@ export default async function DriveFilePage({
   const sp = await searchParams;
   const profile = await getCurrentProfile();
   const supabase = await createClient();
+  const isAdmin = profile?.role === "admin";
 
   const { data: currentDoc } = await supabase
     .from("excel_documents")
     .select("*")
     .eq("drive_file_id", fileId)
     .maybeSingle();
+
+  // Viewer hanya boleh buka file terdaftar di folder yang diizinkan (RLS).
+  if (!isAdmin && !currentDoc) notFound();
 
   const title = currentDoc?.title || sp.title || "File Drive";
   const description = (currentDoc?.description as string) || "";
@@ -91,21 +95,13 @@ export default async function DriveFilePage({
       files={siblingFiles}
       currentFileId={fileId}
     >
-      <Link
-        href={folderId ? `/folders/${folderId}` : "/"}
-        className="text-sm text-[#6b7285] hover:text-[#0c1222]"
-      >
-        ← Kembali{currentFolder ? ` ke ${currentFolder.name}` : ""}
-      </Link>
-      <div className="mt-3">
-        <PreviewTitleEdit
-          documentId={currentDoc?.id ?? null}
-          title={title}
-          description={description}
-          driveUrl={driveUrl}
-          isAdmin={profile?.role === "admin"}
-        />
-      </div>
+      <PreviewTitleEdit
+        documentId={currentDoc?.id ?? null}
+        title={title}
+        description={description}
+        driveUrl={driveUrl}
+        isAdmin={profile?.role === "admin"}
+      />
     </DrivePreviewShell>
   );
 }

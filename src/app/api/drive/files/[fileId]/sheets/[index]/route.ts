@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireViewer } from "@/lib/api-auth";
+import { assertDriveFileAccess } from "@/lib/api-auth";
 import { getParsedDriveFile } from "@/lib/drive/client";
 
 export const runtime = "nodejs";
@@ -10,9 +10,14 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ fileId: string; index: string }> }
 ) {
-  const { error } = await requireViewer();
-  if (error) return NextResponse.json({ error }, { status: 401 });
   const { fileId, index } = await params;
+  const { allowed, error } = await assertDriveFileAccess(fileId);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: error ?? "Tidak ada akses" },
+      { status: error === "Belum login" ? 401 : 403 }
+    );
+  }
   try {
     const file = await getParsedDriveFile(fileId);
     const sheet = file.sheets[Number(index)];
