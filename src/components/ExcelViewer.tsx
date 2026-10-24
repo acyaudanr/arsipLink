@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import SearchableSelect from "@/components/SearchableSelect";
 import type { ParsedSheet } from "@/lib/types";
 
@@ -125,18 +125,6 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
   const [search, setSearch] = useState("");
   const [chunkSize, setChunkSize] = useState(1000);
   const [chunkIndex, setChunkIndex] = useState(0);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const [toolbarH, setToolbarH] = useState(52);
-
-  useEffect(() => {
-    const el = toolbarRef.current;
-    if (!el) return;
-    const apply = () => setToolbarH(el.offsetHeight);
-    apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -191,7 +179,48 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      {/* Judul bisa ikut scroll; toolbar + header tabel sticky */}
+      {/* Toolbar di luar scroll → tidak bentrok sticky header saat scroll horizontal */}
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
+        <div className="relative min-w-[220px] flex-1">
+          <input
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Cari di semua kolom..."
+            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
+        <div className="flex shrink-0 items-end gap-3">
+          <SearchableSelect
+            compact
+            label="Baris / bagian"
+            value={String(chunkSize)}
+            minCh={8}
+            maxCh={14}
+            options={CHUNK_OPTIONS.map((n) => ({
+              value: String(n),
+              label: String(n),
+            }))}
+            onChange={(v) => onChunkSizeChange(Number(v))}
+            searchPlaceholder="Cari…"
+          />
+          <SearchableSelect
+            compact
+            label="Bagian"
+            value={String(safeChunk)}
+            disabled={totalChunks <= 1}
+            minCh={8}
+            maxCh={22}
+            options={chunkOptions}
+            onChange={(v) => setChunkIndex(Number(v))}
+            searchPlaceholder="Cari bagian…"
+          />
+        </div>
+        <span className="text-xs text-slate-400">
+          {filtered.length.toLocaleString("id-ID")} baris
+          {search.trim() ? " cocok" : ""} • tampil {startIdx + 1}–{endIdx || 0}
+        </span>
+      </div>
+
       <div className="table-scroll min-h-0 flex-1 overflow-auto">
         {sheet.titles.length > 0 && (
           <div className="space-y-0.5 border-b border-slate-200 bg-slate-50 px-4 py-3">
@@ -212,52 +241,7 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
           </div>
         )}
 
-        {/* Sticky di bawah nav (top scroll container = di bawah PreviewNav / AppHeader) */}
-        <div
-          ref={toolbarRef}
-          className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5 shadow-[0_1px_0_rgba(15,23,42,0.06)]"
-        >
-          <div className="relative min-w-[220px] flex-1">
-            <input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Cari di semua kolom..."
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
-          <div className="flex shrink-0 items-end gap-3">
-            <SearchableSelect
-              compact
-              label="Baris / bagian"
-              value={String(chunkSize)}
-              minCh={8}
-              maxCh={14}
-              options={CHUNK_OPTIONS.map((n) => ({
-                value: String(n),
-                label: String(n),
-              }))}
-              onChange={(v) => onChunkSizeChange(Number(v))}
-              searchPlaceholder="Cari…"
-            />
-            <SearchableSelect
-              compact
-              label="Bagian"
-              value={String(safeChunk)}
-              disabled={totalChunks <= 1}
-              minCh={8}
-              maxCh={22}
-              options={chunkOptions}
-              onChange={(v) => setChunkIndex(Number(v))}
-              searchPlaceholder="Cari bagian…"
-            />
-          </div>
-          <span className="text-xs text-slate-400">
-            {filtered.length.toLocaleString("id-ID")} baris
-            {search.trim() ? " cocok" : ""} • tampil {startIdx + 1}–{endIdx || 0}
-          </span>
-        </div>
-
-        <table className="locked-table border-collapse text-xs">
+        <table className="locked-table text-xs">
           <colgroup>
             {colWidths.map((col, i) => (
               <col
@@ -274,10 +258,7 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
               />
             ))}
           </colgroup>
-          <thead
-            className="sticky z-20"
-            style={{ top: toolbarH }}
-          >
+          <thead>
             <tr>
               {sheet.headers.map((h, i) => {
                 const col = colWidths[i];
@@ -296,10 +277,10 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                     }
                     className={
                       isUraian
-                        ? "border border-slate-300 bg-slate-100 px-3 py-2.5 text-left align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                        ? "sticky top-0 z-20 border border-slate-300 bg-slate-100 px-3 py-2.5 text-left align-middle text-xs font-bold text-slate-800"
                         : wrapHeader
-                          ? "col-fixed-header col-header-cangrow border border-slate-300 bg-slate-100 px-1.5 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
-                          : "col-fixed-header border border-slate-300 bg-slate-100 px-1.5 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                          ? "col-fixed-header col-header-cangrow sticky top-0 z-20 border border-slate-300 bg-slate-100 px-1.5 py-2 text-center align-middle text-xs font-bold text-slate-800"
+                          : "col-fixed-header sticky top-0 z-20 border border-slate-300 bg-slate-100 px-1.5 py-2 text-center align-middle text-xs font-bold text-slate-800"
                     }
                   >
                     {h}

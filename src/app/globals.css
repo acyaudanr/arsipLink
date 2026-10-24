@@ -38,7 +38,9 @@ body {
   table-layout: auto !important;
   width: max-content !important;
   min-width: 100% !important;
-  border-collapse: collapse !important;
+  /* separate: sticky th bekerja seragam (termasuk kolom paling kanan) */
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
 }
 
 .col-fixed-header {
