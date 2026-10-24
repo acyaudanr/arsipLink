@@ -94,14 +94,17 @@ export default async function DriveFilePage({
       currentFolder={currentFolder}
       files={siblingFiles}
       currentFileId={fileId}
-    >
-      <PreviewTitleEdit
-        documentId={currentDoc?.id ?? null}
-        title={title}
-        description={description}
-        driveUrl={driveUrl}
-        isAdmin={profile?.role === "admin"}
-      />
-    </DrivePreviewShell>
+      fileTitle={title}
+      fileDescription={description}
+      titleActions={
+        <PreviewTitleEdit
+          documentId={currentDoc?.id ?? null}
+          title={title}
+          description={description}
+          driveUrl={driveUrl}
+          isAdmin={isAdmin}
+        />
+      }
+    />
   );
 }

@@ -22,6 +22,9 @@ export default function PreviewNav({
   currentFolder,
   files,
   currentFileId,
+  fileTitle,
+  fileDescription,
+  titleActions,
   sheets,
   activeSheet,
   onSheetChange,
@@ -31,6 +34,9 @@ export default function PreviewNav({
   currentFolder: DriveFolder | null;
   files: ExcelDocument[];
   currentFileId: string;
+  fileTitle: string;
+  fileDescription?: string;
+  titleActions?: React.ReactNode;
   sheets: SheetOption[];
   activeSheet: number;
   onSheetChange: (index: number) => void;
@@ -52,15 +58,23 @@ export default function PreviewNav({
   return (
     <div className="sticky top-14 z-30 border-b border-[#e8eaef] bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-center gap-3 px-5 py-2.5">
-        <div className="min-w-0 flex-1 basis-[140px]">
+        <div className="min-w-0 flex-1 basis-[180px]">
           <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#8a91a0]">
-            Folder
+            File
           </p>
-          <p className="truncate text-sm font-semibold text-[#0c1222]">
-            {currentFolder?.name ?? "Tanpa folder"}
-          </p>
-          {currentFolder?.description ? (
-            <p className="truncate text-xs text-[#8a91a0]">{currentFolder.description}</p>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="truncate font-display text-base font-semibold tracking-tight text-[#0c1222] sm:text-lg">
+              {fileTitle}
+            </p>
+            {titleActions}
+          </div>
+          {fileDescription ? (
+            <p className="mt-0.5 truncate text-xs text-[#8a91a0]">{fileDescription}</p>
+          ) : null}
+          {currentFolder ? (
+            <p className="mt-0.5 truncate text-[11px] text-[#b0b5c0]">
+              Folder: {currentFolder.name}
+            </p>
           ) : null}
         </div>
 
