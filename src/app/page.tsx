@@ -108,6 +108,7 @@ export default async function DashboardPage() {
                   <FolderActions
                     folderId={folder.id}
                     folderName={folder.name}
+                    folderDescription={folder.description ?? ""}
                     fileCount={folder.file_count ?? 0}
                   />
                 </div>

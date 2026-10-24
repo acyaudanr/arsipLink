@@ -3,26 +3,30 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmModal from "@/components/ConfirmModal";
+import EditFolderModal from "@/components/EditFolderModal";
 
 export default function FolderActions({
   folderId,
   folderName,
+  folderDescription = "",
   fileCount = 0,
 }: {
   folderId: string;
   folderName: string;
+  folderDescription?: string;
   fileCount?: number;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const hasFiles = fileCount > 0;
 
-  async function onConfirm() {
+  async function onConfirmDelete() {
     if (hasFiles) {
-      setOpen(false);
+      setDeleteOpen(false);
       return;
     }
     setBusy(true);
@@ -31,7 +35,7 @@ export default function FolderActions({
       const res = await fetch(`/api/drive/folder/${folderId}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Gagal menghapus");
-      setOpen(false);
+      setDeleteOpen(false);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus");
@@ -42,27 +46,52 @@ export default function FolderActions({
 
   return (
     <>
-      <button
-        type="button"
-        title="Hapus folder"
-        aria-label="Hapus folder"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setError(null);
-          setOpen(true);
-        }}
-        className="grid size-9 place-items-center rounded-lg text-[#b0b5c0] transition hover:bg-red-50 hover:text-red-600"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-        </svg>
-      </button>
+      <div className="flex flex-col gap-0.5">
+        <button
+          type="button"
+          title="Edit folder"
+          aria-label="Edit folder"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setEditOpen(true);
+          }}
+          className="grid size-9 place-items-center rounded-lg text-[#b0b5c0] transition hover:bg-[#f0faf6] hover:text-[#1f6b5a]"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          title="Hapus folder"
+          aria-label="Hapus folder"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setError(null);
+            setDeleteOpen(true);
+          }}
+          className="grid size-9 place-items-center rounded-lg text-[#b0b5c0] transition hover:bg-red-50 hover:text-red-600"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+          </svg>
+        </button>
+      </div>
+
+      <EditFolderModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        folderId={folderId}
+        initialName={folderName}
+        initialDescription={folderDescription}
+      />
 
       <ConfirmModal
-        open={open}
-        onClose={() => !busy && setOpen(false)}
-        onConfirm={onConfirm}
+        open={deleteOpen}
+        onClose={() => !busy && setDeleteOpen(false)}
+        onConfirm={onConfirmDelete}
         busy={busy}
         confirmDisabled={hasFiles}
         title={hasFiles ? "Folder masih berisi file" : "Hapus folder?"}
@@ -89,7 +118,7 @@ export default function FolderActions({
             <button
               type="button"
               onClick={() => {
-                setOpen(false);
+                setDeleteOpen(false);
                 router.push(`/folders/${folderId}`);
               }}
               className="w-full rounded-xl border border-[#e0e3ea] bg-white px-4 py-2.5 text-sm font-semibold text-[#0c1222] hover:bg-[#f4f5f7]"

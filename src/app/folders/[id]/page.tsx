@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import type { DriveFolder, ExcelDocument } from "@/lib/types";
 import FolderFileList from "@/components/FolderFileList";
+import FolderHeaderActions from "@/components/FolderHeaderActions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function FolderDetailPage({
   const { id } = await params;
   const profile = await getCurrentProfile();
   const supabase = await createClient();
+  const isAdmin = profile?.role === "admin";
 
   const { data: folder } = await supabase
     .from("drive_folders")
@@ -50,9 +52,18 @@ export default async function FolderDetailPage({
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a91a0]">
               Folder
             </p>
-            <h1 className="font-display text-3xl font-semibold tracking-tight text-[#0c1222]">
-              {f.name}
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-[#0c1222]">
+                {f.name}
+              </h1>
+              {isAdmin && (
+                <FolderHeaderActions
+                  folderId={f.id}
+                  folderName={f.name}
+                  folderDescription={f.description ?? ""}
+                />
+              )}
+            </div>
             {f.description ? (
               <p className="mt-2 text-[15px] leading-relaxed text-[#6b7285]">{f.description}</p>
             ) : null}
@@ -61,11 +72,7 @@ export default async function FolderDetailPage({
         </div>
       </div>
 
-      <FolderFileList
-        files={list}
-        isAdmin={profile?.role === "admin"}
-        folderId={f.id}
-      />
+      <FolderFileList files={list} isAdmin={isAdmin} folderId={f.id} />
     </div>
   );
 }
