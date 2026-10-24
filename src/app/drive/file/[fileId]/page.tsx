@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import DrivePreviewShell from "@/components/DrivePreviewShell";
-import PreviewTitleEdit from "@/components/PreviewTitleEdit";
 import type { DriveFolder, ExcelDocument } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -94,16 +93,6 @@ export default async function DriveFilePage({
       currentFolder={currentFolder}
       files={siblingFiles}
       currentFileId={fileId}
-      fileTitle={title}
-      titleActions={
-        <PreviewTitleEdit
-          documentId={currentDoc?.id ?? null}
-          title={title}
-          description={description}
-          driveUrl={driveUrl}
-          isAdmin={isAdmin}
-        />
-      }
     />
   );
 }

@@ -22,8 +22,6 @@ export default function PreviewNav({
   currentFolder,
   files,
   currentFileId,
-  fileTitle,
-  titleActions,
   sheets,
   activeSheet,
   onSheetChange,
@@ -33,8 +31,6 @@ export default function PreviewNav({
   currentFolder: DriveFolder | null;
   files: ExcelDocument[];
   currentFileId: string;
-  fileTitle: string;
-  titleActions?: React.ReactNode;
   sheets: SheetOption[];
   activeSheet: number;
   onSheetChange: (index: number) => void;
@@ -55,75 +51,64 @@ export default function PreviewNav({
 
   return (
     <div className="sticky top-14 z-30 border-b border-[#e8eaef] bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-start gap-3 px-5 py-2.5">
-        <div className="min-w-0 flex-1 basis-[200px]">
-          <div className="flex min-w-0 flex-wrap items-start gap-2">
-            <p className="min-w-0 flex-1 break-words text-[13px] font-medium leading-snug text-[#0c1222]">
-              {fileTitle}
-            </p>
-            {titleActions}
-          </div>
-        </div>
+      <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-end gap-2 px-5 py-2.5">
+        <label className="min-w-[140px] flex-1 lg:flex-none">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
+            Pilih folder
+          </span>
+          <select
+            value={currentFolder?.id ?? ""}
+            onChange={(e) => onFolderChange(e.target.value)}
+            className="w-full rounded-lg border border-[#e0e3ea] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15 lg:min-w-[180px]"
+          >
+            {!currentFolder && <option value="">—</option>}
+            {folders.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto lg:flex-nowrap">
-          <label className="min-w-[140px] flex-1 lg:flex-none">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
-              Pilih folder
-            </span>
-            <select
-              value={currentFolder?.id ?? ""}
-              onChange={(e) => onFolderChange(e.target.value)}
-              className="w-full rounded-lg border border-[#e0e3ea] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15 lg:min-w-[180px]"
-            >
-              {!currentFolder && <option value="">—</option>}
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <label className="min-w-[160px] flex-1 lg:flex-none">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
+            Pilih file
+          </span>
+          <select
+            value={currentFileId}
+            onChange={(e) => onFileChange(e.target.value)}
+            className="w-full rounded-lg border border-[#e0e3ea] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15 lg:min-w-[220px]"
+          >
+            {files.length === 0 && <option value={currentFileId}>File saat ini</option>}
+            {files.map((f) => (
+              <option key={f.id} value={f.drive_file_id ?? ""}>
+                {f.title}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <label className="min-w-[160px] flex-1 lg:flex-none">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
-              Pilih file
-            </span>
-            <select
-              value={currentFileId}
-              onChange={(e) => onFileChange(e.target.value)}
-              className="w-full rounded-lg border border-[#e0e3ea] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15 lg:min-w-[220px]"
-            >
-              {files.length === 0 && <option value={currentFileId}>File saat ini</option>}
-              {files.map((f) => (
-                <option key={f.id} value={f.drive_file_id ?? ""}>
-                  {f.title}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="min-w-[180px] flex-[1.3] lg:flex-none">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
-              Pilih tab / sheet
-            </span>
-            <select
-              value={sheetsLoading || sheets.length === 0 ? "" : String(activeSheet)}
-              onChange={(e) => onSheetChange(Number(e.target.value))}
-              disabled={sheetsLoading || sheets.length === 0}
-              className="w-full rounded-lg border border-[#e0e3ea] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15 disabled:opacity-60 lg:min-w-[260px]"
-            >
-              {sheetsLoading && <option value="">Memuat sheet...</option>}
-              {!sheetsLoading && sheets.length === 0 && (
-                <option value="">Tidak ada sheet</option>
-              )}
-              {sheets.map((s) => (
-                <option key={s.index} value={s.index}>
-                  Tab {s.index + 1}: {s.sheetName} ({s.rowCount.toLocaleString("id-ID")} baris)
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <label className="min-w-[180px] flex-[1.3] lg:flex-none">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
+            Pilih tab / sheet
+          </span>
+          <select
+            value={sheetsLoading || sheets.length === 0 ? "" : String(activeSheet)}
+            onChange={(e) => onSheetChange(Number(e.target.value))}
+            disabled={sheetsLoading || sheets.length === 0}
+            className="w-full rounded-lg border border-[#e0e3ea] bg-white px-2.5 py-2 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15 disabled:opacity-60 lg:min-w-[260px]"
+          >
+            {sheetsLoading && <option value="">Memuat sheet...</option>}
+            {!sheetsLoading && sheets.length === 0 && (
+              <option value="">Tidak ada sheet</option>
+            )}
+            {sheets.map((s) => (
+              <option key={s.index} value={s.index}>
+                Tab {s.index + 1}: {s.sheetName} ({s.rowCount.toLocaleString("id-ID")} baris)
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     </div>
   );

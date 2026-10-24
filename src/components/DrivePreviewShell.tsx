@@ -10,15 +10,11 @@ export default function DrivePreviewShell({
   currentFolder,
   files,
   currentFileId,
-  fileTitle,
-  titleActions,
 }: {
   folders: DriveFolder[];
   currentFolder: DriveFolder | null;
   files: ExcelDocument[];
   currentFileId: string;
-  fileTitle: string;
-  titleActions?: React.ReactNode;
 }) {
   const [sheets, setSheets] = useState<SheetOption[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
@@ -36,8 +32,6 @@ export default function DrivePreviewShell({
         currentFolder={currentFolder}
         files={files}
         currentFileId={currentFileId}
-        fileTitle={fileTitle}
-        titleActions={titleActions}
         sheets={sheets}
         activeSheet={activeSheet}
         onSheetChange={setActiveSheet}
