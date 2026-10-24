@@ -20,11 +20,11 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      router.push("/");
+      // Tetap "Memproses..." sampai navigasi selesai — jangan balikin ke "Masuk"
+      router.replace("/");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
-    } finally {
       setLoading(false);
     }
   }
