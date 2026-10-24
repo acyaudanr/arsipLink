@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import SearchableSelect from "@/components/SearchableSelect";
 import type { DriveFolder, ExcelDocument } from "@/lib/types";
@@ -40,9 +40,16 @@ export default function PreviewSelectors({
   onFolderSelect?: (folderId: string) => void;
 }) {
   const router = useRouter();
+  /** Update label file langsung tanpa nunggu navigasi selesai */
+  const [pendingFileId, setPendingFileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPendingFileId(null);
+  }, [currentFileId]);
 
   function onFolderChange(id: string) {
     if (!id) return;
+    setPendingFileId("");
     if (onFolderSelect) {
       onFolderSelect(id);
       return;
@@ -51,6 +58,7 @@ export default function PreviewSelectors({
   }
 
   function onFileChange(driveFileId: string) {
+    setPendingFileId(driveFileId);
     if (!driveFileId) {
       if (requireFilePick) {
         router.push(currentFolder ? `/?folder=${currentFolder.id}` : "/");
@@ -62,11 +70,14 @@ export default function PreviewSelectors({
     router.push(fileHref(file));
   }
 
-  const fileValue = requireFilePick
-    ? files.some((f) => f.drive_file_id === currentFileId)
-      ? currentFileId
-      : ""
-    : currentFileId;
+  const resolvedFileId =
+    pendingFileId !== null
+      ? pendingFileId
+      : requireFilePick
+        ? files.some((f) => f.drive_file_id === currentFileId)
+          ? currentFileId
+          : ""
+        : currentFileId;
 
   const folderOptions = useMemo(
     () =>
@@ -106,50 +117,48 @@ export default function PreviewSelectors({
     sheetsLoading || sheets.length === 0 ? "" : String(activeSheet);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-wrap items-end gap-2">
-      <div className={`min-w-[140px] flex-1 ${compact ? "max-w-[220px]" : "lg:min-w-[200px] lg:flex-none"}`}>
-        <SearchableSelect
-          label="Pilih folder"
-          compact={compact}
-          value={currentFolder?.id ?? ""}
-          options={
-            currentFolder
-              ? folderOptions
-              : [{ value: "", label: "—" }, ...folderOptions]
-          }
-          onChange={onFolderChange}
-          placeholder="Pilih folder"
-          searchPlaceholder="Cari folder…"
-        />
-      </div>
+    <div className="flex w-fit max-w-full flex-wrap items-end justify-center gap-2">
+      <SearchableSelect
+        label="Pilih folder"
+        compact={compact}
+        value={currentFolder?.id ?? ""}
+        options={
+          currentFolder ? folderOptions : [{ value: "", label: "—" }, ...folderOptions]
+        }
+        onChange={onFolderChange}
+        placeholder="Pilih folder"
+        searchPlaceholder="Cari folder…"
+        minCh={12}
+        maxCh={28}
+      />
 
-      <div className={`min-w-[160px] flex-[1.5] ${compact ? "" : "lg:min-w-[260px] lg:flex-none"}`}>
-        <SearchableSelect
-          label="Pilih file"
-          compact={compact}
-          value={fileValue}
-          options={fileOptions}
-          onChange={onFileChange}
-          placeholder="Pilih file"
-          searchPlaceholder="Cari file…"
-        />
-      </div>
+      <SearchableSelect
+        label="Pilih file"
+        compact={compact}
+        value={resolvedFileId}
+        options={fileOptions}
+        onChange={onFileChange}
+        placeholder="Pilih file"
+        searchPlaceholder="Cari file…"
+        minCh={16}
+        maxCh={42}
+      />
 
-      <div className={`min-w-[160px] flex-[1.3] ${compact ? "" : "lg:min-w-[240px] lg:flex-none"}`}>
-        <SearchableSelect
-          label="Pilih tab / sheet"
-          compact={compact}
-          value={sheetValue}
-          options={sheetOptions}
-          onChange={(v) => {
-            if (v === "") return;
-            onSheetChange(Number(v));
-          }}
-          disabled={sheetsLoading || sheets.length === 0}
-          placeholder="Pilih sheet"
-          searchPlaceholder="Cari sheet…"
-        />
-      </div>
+      <SearchableSelect
+        label="Pilih tab / sheet"
+        compact={compact}
+        value={sheetValue}
+        options={sheetOptions}
+        onChange={(v) => {
+          if (v === "") return;
+          onSheetChange(Number(v));
+        }}
+        disabled={sheetsLoading || sheets.length === 0}
+        placeholder="Pilih sheet"
+        searchPlaceholder="Cari sheet…"
+        minCh={14}
+        maxCh={32}
+      />
     </div>
   );
 }

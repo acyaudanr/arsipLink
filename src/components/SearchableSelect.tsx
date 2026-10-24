@@ -8,6 +8,10 @@ export type SearchableOption = {
   hint?: string;
 };
 
+function clamp(n: number, min: number, max: number) {
+  return Math.min(Math.max(n, min), max);
+}
+
 export default function SearchableSelect({
   label,
   value,
@@ -18,6 +22,8 @@ export default function SearchableSelect({
   disabled = false,
   compact = false,
   emptyText = "Tidak ada hasil",
+  minCh = 14,
+  maxCh = 36,
 }: {
   label?: string;
   value: string;
@@ -28,6 +34,9 @@ export default function SearchableSelect({
   disabled?: boolean;
   compact?: boolean;
   emptyText?: string;
+  /** Lebar trigger mengikuti panjang label (ch) */
+  minCh?: number;
+  maxCh?: number;
 }) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -35,8 +44,23 @@ export default function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
+  /** Label yang langsung tampil saat dipilih (sebelum prop value ikut) */
+  const [optimistic, setOptimistic] = useState<SearchableOption | null>(null);
 
-  const selected = options.find((o) => o.value === value) ?? null;
+  const selectedFromProps = options.find((o) => o.value === value) ?? null;
+  const selected =
+    optimistic && optimistic.value === value
+      ? optimistic
+      : optimistic && !selectedFromProps
+        ? optimistic
+        : selectedFromProps ?? optimistic;
+
+  useEffect(() => {
+    // Sinkron: kalau value dari luar sudah sama dengan optimistic, lepas optimistic
+    if (optimistic && optimistic.value === value) {
+      setOptimistic(null);
+    }
+  }, [value, optimistic]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -48,6 +72,15 @@ export default function SearchableSelect({
         o.value.toLowerCase().includes(q)
     );
   }, [options, query]);
+
+  const triggerCh = useMemo(() => {
+    const labels = [
+      selected?.label ?? placeholder,
+      ...options.map((o) => o.label),
+    ];
+    const longest = labels.reduce((m, s) => Math.max(m, s.length), 0);
+    return clamp(longest + 2, minCh, maxCh);
+  }, [options, selected, placeholder, minCh, maxCh]);
 
   useEffect(() => {
     if (!open) return;
@@ -74,6 +107,8 @@ export default function SearchableSelect({
   }, [query]);
 
   function pick(v: string) {
+    const opt = options.find((o) => o.value === v) ?? null;
+    if (opt) setOptimistic(opt);
     onChange(v);
     setOpen(false);
   }
@@ -96,8 +131,10 @@ export default function SearchableSelect({
     ? "mb-0.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]"
     : "mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]";
 
+  const displayValue = selected?.value ?? value;
+
   return (
-    <div className="relative min-w-0" ref={rootRef}>
+    <div className="relative shrink-0" ref={rootRef} style={{ width: `${triggerCh}ch` }}>
       {label ? <span className={labelCls}>{label}</span> : null}
       <button
         type="button"
@@ -120,6 +157,7 @@ export default function SearchableSelect({
           className={`min-w-0 flex-1 truncate ${
             selected ? "font-medium text-[#0c1222]" : "text-[#8a91a0]"
           }`}
+          title={selected?.label}
         >
           {selected ? selected.label : placeholder}
         </span>
@@ -140,7 +178,8 @@ export default function SearchableSelect({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1.5 overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
+          className="absolute left-1/2 z-50 mt-1.5 min-w-full -translate-x-1/2 overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
+          style={{ width: `max(100%, ${clamp(triggerCh + 8, 20, 44)}ch)` }}
         >
           <div className="border-b border-[#eef0f4] p-2">
             <div className="relative">
@@ -172,7 +211,7 @@ export default function SearchableSelect({
               <li className="px-3 py-6 text-center text-sm text-[#8a91a0]">{emptyText}</li>
             ) : (
               filtered.map((opt, i) => {
-                const active = opt.value === value;
+                const active = opt.value === displayValue;
                 const hi = i === highlight;
                 return (
                   <li key={`${opt.value}-${i}`}>

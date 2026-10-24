@@ -22,14 +22,47 @@ export default function AppHeader({
   const router = useRouter();
   const showViewerNav = isViewer && preview !== null;
 
+  if (showViewerNav && preview) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-[#e8eaef] bg-white/90 backdrop-blur-md">
+        <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2 sm:px-4">
+          <Link href="/" className="group flex shrink-0 items-center gap-2.5">
+            <span className="grid size-8 place-items-center rounded-md bg-[#0c1222] font-display text-[13px] font-bold tracking-wide text-white">
+              AR
+            </span>
+            <span className="font-display text-[15px] font-semibold tracking-tight text-[#0c1222]">
+              Arsip
+            </span>
+          </Link>
+
+          <div className="flex min-w-0 justify-center overflow-visible">
+            <PreviewSelectors
+              compact
+              requireFilePick
+              folders={preview.folders}
+              currentFolder={preview.currentFolder}
+              files={preview.files}
+              currentFileId={preview.currentFileId}
+              sheets={preview.sheets}
+              activeSheet={preview.activeSheet}
+              onSheetChange={preview.onSheetChange}
+              sheetsLoading={preview.sheetsLoading}
+              onFolderSelect={(folderId) => router.push(`/?folder=${folderId}`)}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <UserMenu email={email} roleLabel="Viewer" />
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8eaef] bg-white/90 backdrop-blur-md">
-        <div
-          className={`flex w-full items-center gap-3 px-3 sm:px-4 ${
-            showViewerNav ? "min-h-14 flex-wrap py-2" : "mx-auto h-14 max-w-[1280px] px-5"
-          }`}
-        >
+        <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-6 px-5">
           <Link href="/" className="group flex shrink-0 items-center gap-2.5">
             <span className="grid size-8 place-items-center rounded-md bg-[#0c1222] font-display text-[13px] font-bold tracking-wide text-white">
               AR
@@ -54,22 +87,6 @@ export default function AppHeader({
                 Pengguna
               </Link>
             </nav>
-          )}
-
-          {showViewerNav && preview && (
-            <PreviewSelectors
-              compact
-              requireFilePick
-              folders={preview.folders}
-              currentFolder={preview.currentFolder}
-              files={preview.files}
-              currentFileId={preview.currentFileId}
-              sheets={preview.sheets}
-              activeSheet={preview.activeSheet}
-              onSheetChange={preview.onSheetChange}
-              sheetsLoading={preview.sheetsLoading}
-              onFolderSelect={(folderId) => router.push(`/?folder=${folderId}`)}
-            />
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-3">
