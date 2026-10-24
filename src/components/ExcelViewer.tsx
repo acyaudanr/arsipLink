@@ -11,31 +11,41 @@ function isUraianInformasiColumn(name: string): boolean {
   return n.includes("uraian") && (n.includes("informasi") || n.includes("arsip"));
 }
 
-/** Lebar kolom (ch) dari header + sampel isi — kolom pendek (No) tetap sempit. */
+type ColSize = {
+  /** Lebar dasar (ch); null = kolom fleksibel (uraian) */
+  ch: number | null;
+  /** Konten panjang → boleh wrap / melebar */
+  canGrow: boolean;
+};
+
+/** Isi panjang di atas ini → kolom canGrow (wrap), bukan dipaksa satu baris. */
+const CONTENT_GROW_AT = 28;
+
+/** Lebar dari panjang header utuh (satu line) + sampel isi. */
 function measureColWidths(
   headers: string[],
   rows: string[][],
   sampleLimit = 200
-): (number | null)[] {
+): ColSize[] {
   const sample = rows.length > sampleLimit ? rows.slice(0, sampleLimit) : rows;
   return headers.map((h, i) => {
-    if (isUraianInformasiColumn(h)) return null;
-    const words = h.trim().split(/\s+/).filter(Boolean);
-    let maxLen = words.length ? Math.max(...words.map((w) => w.length)) : h.length;
+    if (isUraianInformasiColumn(h)) return { ch: null, canGrow: true };
+
+    const headerLen = h.replace(/\s+/g, " ").trim().length;
+    let contentMax = 0;
     for (const row of sample) {
       const len = String(row[i] ?? "").trim().length;
-      if (len > maxLen) maxLen = len;
+      if (len > contentMax) contentMax = len;
     }
-    // padding kecil; cap biar 1 sel panjang tidak merusak layout
-    return Math.min(Math.max(maxLen + 2, 3), 42);
-  });
-}
 
-/** Header dipotong per kata dengan <br> seperti wakaka2. */
-function formatHeaderHTML(colName: string): string {
-  const words = colName.trim().split(/\s+/).filter(Boolean);
-  if (words.length <= 1) return escapeHtml(colName);
-  return words.map(escapeHtml).join("<br>");
+    const canGrow = contentMax > CONTENT_GROW_AT;
+    // Minimal muat header satu line; konten pendek ikut diukur
+    const contentCh = canGrow
+      ? Math.min(contentMax + 2, CONTENT_GROW_AT + 4)
+      : contentMax + 2;
+    const ch = Math.min(Math.max(headerLen + 2, contentCh, 3), 48);
+    return { ch, canGrow };
+  });
 }
 
 function escapeHtml(s: string): string {
@@ -198,43 +208,39 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
 
         <table className="locked-table border-collapse text-xs">
           <colgroup>
-            {sheet.headers.map((h, i) => {
-              const w = colWidths[i];
-              return (
-                <col
-                  key={i}
-                  style={
-                    w == null
-                      ? { width: "auto", minWidth: "12rem" }
-                      : { width: `${w}ch`, maxWidth: `${w}ch` }
-                  }
-                />
-              );
-            })}
+            {colWidths.map((col, i) => (
+              <col
+                key={i}
+                style={
+                  col.ch == null
+                    ? { width: "auto", minWidth: "14rem" }
+                    : col.canGrow
+                      ? { minWidth: `${col.ch}ch`, width: "auto" }
+                      : { width: `${col.ch}ch`, maxWidth: `${col.ch}ch` }
+                }
+              />
+            ))}
           </colgroup>
           <thead
             className="sticky z-20"
             style={{ top: toolbarH }}
           >
             <tr>
-              {sheet.headers.map((h, i) =>
-                isUraianInformasiColumn(h) ? (
+              {sheet.headers.map((h, i) => {
+                const isUraian = isUraianInformasiColumn(h);
+                return (
                   <th
                     key={i}
-                    className="border border-slate-300 bg-slate-100 px-3 py-2.5 text-left align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                    className={
+                      isUraian
+                        ? "border border-slate-300 bg-slate-100 px-3 py-2.5 text-left align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                        : "col-fixed-header border border-slate-300 bg-slate-100 px-2 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                    }
                   >
                     {h}
                   </th>
-                ) : (
-                  <th
-                    key={i}
-                    className={`col-fixed-header border border-slate-300 bg-slate-100 px-2 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]${
-                      h.trim().split(/\s+/).length > 1 ? " col-header-wrap" : ""
-                    }`}
-                    dangerouslySetInnerHTML={{ __html: formatHeaderHTML(h) }}
-                  />
-                )
-              )}
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -254,14 +260,17 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                     const cellVal = row[ci] ?? "";
                     const kw = search.trim();
                     const isUraian = isUraianInformasiColumn(h);
+                    const canGrow = colWidths[ci]?.canGrow ?? false;
                     return (
                       <td
                         key={ci}
-                        title={isUraian ? undefined : String(cellVal)}
+                        title={isUraian || canGrow ? undefined : String(cellVal)}
                         className={
                           isUraian
                             ? "col-flexible-main border border-slate-200 px-3 py-2 align-top text-left text-xs text-slate-800"
-                            : "col-fixed-body border border-slate-200 px-2 py-2 text-center align-top text-xs text-slate-800"
+                            : canGrow
+                              ? "col-fixed-body col-cangrow border border-slate-200 px-2 py-2 align-top text-left text-xs text-slate-800"
+                              : "col-fixed-body border border-slate-200 px-2 py-2 text-center align-top text-xs text-slate-800"
                         }
                         dangerouslySetInnerHTML={{
                           __html: highlight(String(cellVal), kw),

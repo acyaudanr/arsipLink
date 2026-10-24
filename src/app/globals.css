@@ -41,7 +41,7 @@ body {
   border-collapse: collapse !important;
 }
 
-/* Kolom padat: lebar ikut isi, jangan melebar isi ruang sisa */
+/* Header: selalu satu baris; lebar kolom diukur dari panjang teks header */
 .col-fixed-header {
   white-space: nowrap !important;
   word-break: keep-all !important;
@@ -51,18 +51,23 @@ body {
   width: 1% !important;
 }
 
-.col-fixed-header.col-header-wrap {
-  white-space: normal !important;
-}
-
+/* Isi pendek: satu baris, lebar mengikuti konten */
 .col-fixed-body {
   white-space: nowrap !important;
   word-break: normal !important;
   box-sizing: border-box !important;
   width: 1% !important;
-  max-width: 28rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Isi panjang: boleh wrap / tumbuh (cangrow) */
+.col-fixed-body.col-cangrow {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  max-width: 22rem;
+  width: auto !important;
 }
 
 /* Kolom uraian: ambil sisa ruang */
@@ -71,7 +76,7 @@ body {
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   box-sizing: border-box !important;
-  min-width: 12rem;
+  min-width: 14rem;
 }
 
 .search-highlight {
