@@ -14,14 +14,19 @@ function isUraianInformasiColumn(name: string): boolean {
 type ColSize = {
   /** Lebar dasar (ch); null = kolom fleksibel (uraian) */
   ch: number | null;
-  /** Konten panjang → boleh wrap / melebar */
-  canGrow: boolean;
+  /** Isi > 40 karakter → body wrap */
+  canGrowBody: boolean;
+  /** Header lebih panjang dari lebar isi → header wrap, kolom tetap sempit */
+  canGrowHeader: boolean;
 };
 
-/** Isi panjang di atas ini → kolom canGrow (wrap), bukan dipaksa satu baris. */
+/** Isi di atas ini → body canGrow. */
 const CONTENT_GROW_AT = 40;
 
-/** Lebar dari panjang header utuh (satu line) + sampel isi. */
+/**
+ * Lebar mengikuti isi (autofit).
+ * Header panjang + isi pendek → wrap header, jangan paksa kolom melebar.
+ */
 function measureColWidths(
   headers: string[],
   rows: string[][],
@@ -29,22 +34,36 @@ function measureColWidths(
 ): ColSize[] {
   const sample = rows.length > sampleLimit ? rows.slice(0, sampleLimit) : rows;
   return headers.map((h, i) => {
-    if (isUraianInformasiColumn(h)) return { ch: null, canGrow: true };
+    if (isUraianInformasiColumn(h)) {
+      return { ch: null, canGrowBody: true, canGrowHeader: true };
+    }
 
-    const headerLen = h.replace(/\s+/g, " ").trim().length;
+    const headerText = h.replace(/\s+/g, " ").trim();
+    const headerLen = headerText.length;
+    const words = headerText.split(/\s+/).filter(Boolean);
+    const longestWord = words.reduce((m, w) => Math.max(m, w.length), 1);
+
     let contentMax = 0;
     for (const row of sample) {
       const len = String(row[i] ?? "").trim().length;
       if (len > contentMax) contentMax = len;
     }
 
-    const canGrow = contentMax > CONTENT_GROW_AT;
-    // Minimal muat header satu line; konten pendek ikut diukur
-    const contentCh = canGrow
-      ? Math.min(contentMax + 2, CONTENT_GROW_AT + 4)
-      : contentMax + 2;
-    const ch = Math.min(Math.max(headerLen + 2, contentCh, 3), 48);
-    return { ch, canGrow };
+    const canGrowBody = contentMax > CONTENT_GROW_AT;
+    // Lebar inti = isi (bukan panjang header)
+    let ch = Math.max((canGrowBody ? Math.min(contentMax, CONTENT_GROW_AT) : contentMax) + 2, 3);
+
+    // Header lebih panjang dari kolom isi → wrap header, jaga min = kata terpanjang
+    let canGrowHeader = false;
+    if (headerLen + 2 > ch) {
+      canGrowHeader = true;
+      ch = Math.max(ch, Math.min(longestWord + 1, 14));
+    } else {
+      // Header pendek: sedikit longgarkan biar muat 1 baris
+      ch = Math.max(ch, headerLen + 2);
+    }
+
+    return { ch: Math.min(ch, 48), canGrowBody, canGrowHeader };
   });
 }
 
@@ -213,9 +232,9 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                 key={i}
                 style={
                   col.ch == null
-                    ? { width: "auto", minWidth: "14rem" }
-                    : col.canGrow
-                      ? { minWidth: `${col.ch}ch`, width: "auto" }
+                    ? { width: "auto", minWidth: "10rem" }
+                    : col.canGrowBody
+                      ? { width: `${col.ch}ch`, minWidth: `${Math.min(col.ch, 12)}ch` }
                       : { width: `${col.ch}ch`, maxWidth: `${col.ch}ch` }
                 }
               />
@@ -228,13 +247,16 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
             <tr>
               {sheet.headers.map((h, i) => {
                 const isUraian = isUraianInformasiColumn(h);
+                const wrapHeader = colWidths[i]?.canGrowHeader ?? false;
                 return (
                   <th
                     key={i}
                     className={
                       isUraian
                         ? "border border-slate-300 bg-slate-100 px-3 py-2.5 text-left align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
-                        : "col-fixed-header border border-slate-300 bg-slate-100 px-2 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                        : wrapHeader
+                          ? "col-fixed-header col-header-cangrow border border-slate-300 bg-slate-100 px-1.5 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
+                          : "col-fixed-header border border-slate-300 bg-slate-100 px-2 py-2 text-center align-middle text-xs font-bold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.08)]"
                     }
                   >
                     {h}
@@ -260,15 +282,15 @@ export default function ExcelViewer({ sheet }: { sheet: ParsedSheet }) {
                     const cellVal = row[ci] ?? "";
                     const kw = search.trim();
                     const isUraian = isUraianInformasiColumn(h);
-                    const canGrow = colWidths[ci]?.canGrow ?? false;
+                    const canGrowBody = colWidths[ci]?.canGrowBody ?? false;
                     return (
                       <td
                         key={ci}
-                        title={isUraian || canGrow ? undefined : String(cellVal)}
+                        title={isUraian || canGrowBody ? undefined : String(cellVal)}
                         className={
                           isUraian
                             ? "col-flexible-main border border-slate-200 px-3 py-2 align-top text-left text-xs text-slate-800"
-                            : canGrow
+                            : canGrowBody
                               ? "col-fixed-body col-cangrow border border-slate-200 px-2 py-2 align-top text-left text-xs text-slate-800"
                               : "col-fixed-body border border-slate-200 px-2 py-2 text-center align-top text-xs text-slate-800"
                         }

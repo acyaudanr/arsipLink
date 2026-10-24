@@ -36,12 +36,12 @@ body {
 
 .locked-table {
   table-layout: auto !important;
-  width: max-content !important;
-  min-width: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
   border-collapse: collapse !important;
 }
 
-/* Header: selalu satu baris; lebar kolom diukur dari panjang teks header */
+/* Header pendek: satu baris */
 .col-fixed-header {
   white-space: nowrap !important;
   word-break: keep-all !important;
@@ -49,6 +49,15 @@ body {
   box-sizing: border-box !important;
   line-height: 1.25 !important;
   width: 1% !important;
+}
+
+/* Header panjang + isi pendek: wrap (cangrow), kolom tetap sempit */
+.col-fixed-header.col-header-cangrow {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.2 !important;
+  hyphens: auto;
 }
 
 /* Isi pendek: satu baris, lebar mengikuti konten */
@@ -59,14 +68,14 @@ body {
   width: 1% !important;
 }
 
-/* Isi panjang: boleh wrap / tumbuh (cangrow) */
+/* Isi > 40 karakter: wrap (cangrow) */
 .col-fixed-body.col-cangrow {
   white-space: normal !important;
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   overflow: visible !important;
   text-overflow: unset !important;
-  max-width: 22rem;
+  max-width: 18rem;
   width: auto !important;
 }
 
@@ -76,7 +85,7 @@ body {
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   box-sizing: border-box !important;
-  min-width: 14rem;
+  min-width: 8rem;
 }
 
 .search-highlight {
