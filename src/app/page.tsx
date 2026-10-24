@@ -1,51 +1,46 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import type { DriveFolder, ExcelDocument } from "@/lib/types";
 import FolderActions from "@/components/FolderActions";
+import ViewerHome from "@/components/ViewerHome";
 
 export const dynamic = "force-dynamic";
 
-async function redirectViewerToFirstFile() {
-  const supabase = await createClient();
-  const { data: folders } = await supabase
-    .from("drive_folders")
-    .select("id")
-    .order("name", { ascending: true });
-
-  for (const folder of folders ?? []) {
-    const { data: files } = await supabase
-      .from("excel_documents")
-      .select("drive_file_id, title")
-      .eq("folder_id", folder.id)
-      .eq("drive_kind", "file")
-      .order("title", { ascending: true })
-      .limit(1);
-
-    const first = files?.[0] as Pick<ExcelDocument, "drive_file_id" | "title"> | undefined;
-    if (first?.drive_file_id) {
-      const title = encodeURIComponent(first.title || "File");
-      redirect(`/drive/file/${first.drive_file_id}?title=${title}`);
-    }
-  }
-}
-
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ folder?: string }>;
+}) {
+  const sp = await searchParams;
   const profile = await getCurrentProfile();
   const supabase = await createClient();
   const isAdmin = profile?.role === "admin";
 
-  // Viewer langsung ke preview file pertama yang diizinkan
+  // Viewer: landing dengan selector, file belum dipilih
   if (profile?.role === "viewer") {
-    await redirectViewerToFirstFile();
+    const { data: foldersRaw } = await supabase
+      .from("drive_folders")
+      .select("*")
+      .order("name", { ascending: true });
+    const folders = (foldersRaw ?? []) as DriveFolder[];
+
+    const requestedId = sp.folder?.trim() || "";
+    const currentFolder =
+      folders.find((f) => f.id === requestedId) ?? folders[0] ?? null;
+
+    let files: ExcelDocument[] = [];
+    if (currentFolder) {
+      const { data: filesRaw } = await supabase
+        .from("excel_documents")
+        .select("*")
+        .eq("folder_id", currentFolder.id)
+        .order("title", { ascending: true });
+      files = (filesRaw ?? []) as ExcelDocument[];
+    }
+
     return (
-      <div className="mx-auto max-w-lg px-5 py-16 text-center">
-        <p className="font-display text-xl text-[#0c1222]">Belum ada file</p>
-        <p className="mt-2 text-sm text-[#6b7285]">
-          Belum ada folder/file yang diizinkan untuk akunmu. Minta Administrator mengatur akses.
-        </p>
-      </div>
+      <ViewerHome folders={folders} currentFolder={currentFolder} files={files} />
     );
   }
 

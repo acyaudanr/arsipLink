@@ -22,6 +22,7 @@ export default function PreviewSelectors({
   onSheetChange,
   sheetsLoading,
   compact = false,
+  requireFilePick = false,
   onFolderSelect,
 }: {
   folders: DriveFolder[];
@@ -34,7 +35,9 @@ export default function PreviewSelectors({
   sheetsLoading?: boolean;
   /** Lebih rapat untuk top nav viewer */
   compact?: boolean;
-  /** Override: viewer pilih folder -> file pertama, bukan list folder */
+  /** Viewer: opsi kosong dulu, user harus pilih file */
+  requireFilePick?: boolean;
+  /** Override navigasi saat pilih folder */
   onFolderSelect?: (folderId: string) => void;
 }) {
   const router = useRouter();
@@ -49,10 +52,22 @@ export default function PreviewSelectors({
   }
 
   function onFileChange(driveFileId: string) {
+    if (!driveFileId) {
+      if (requireFilePick) {
+        router.push(currentFolder ? `/?folder=${currentFolder.id}` : "/");
+      }
+      return;
+    }
     const file = files.find((f) => f.drive_file_id === driveFileId);
     if (!file) return;
     router.push(fileHref(file));
   }
+
+  const fileValue = requireFilePick
+    ? files.some((f) => f.drive_file_id === currentFileId)
+      ? currentFileId
+      : ""
+    : currentFileId;
 
   const labelCls = compact
     ? "mb-0.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]"
@@ -82,11 +97,14 @@ export default function PreviewSelectors({
       <label className={`min-w-[140px] flex-[1.4] ${compact ? "" : "lg:flex-none lg:min-w-[220px]"}`}>
         <span className={labelCls}>Pilih file</span>
         <select
-          value={currentFileId}
+          value={fileValue}
           onChange={(e) => onFileChange(e.target.value)}
           className={selectCls}
         >
-          {files.length === 0 && <option value={currentFileId}>File saat ini</option>}
+          {requireFilePick && <option value="">— Pilih file —</option>}
+          {!requireFilePick && files.length === 0 && (
+            <option value={currentFileId}>File saat ini</option>
+          )}
           {files.map((f) => (
             <option key={f.id} value={f.drive_file_id ?? ""}>
               {f.title}

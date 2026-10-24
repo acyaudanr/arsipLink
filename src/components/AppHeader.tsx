@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import UploadModal from "@/components/UploadModal";
 import PreviewSelectors from "@/components/PreviewSelectors";
+import UserMenu from "@/components/UserMenu";
 import { useViewerPreview } from "@/components/ViewerPreviewContext";
 
 export default function AppHeader({
@@ -29,7 +30,7 @@ export default function AppHeader({
             showViewerNav ? "min-h-14 flex-wrap py-2" : "mx-auto h-14 max-w-[1280px] px-5"
           }`}
         >
-          <Link href={isViewer ? "/" : "/"} className="group flex shrink-0 items-center gap-2.5">
+          <Link href="/" className="group flex shrink-0 items-center gap-2.5">
             <span className="grid size-8 place-items-center rounded-md bg-[#0c1222] font-display text-[13px] font-bold tracking-wide text-white">
               AR
             </span>
@@ -58,6 +59,7 @@ export default function AppHeader({
           {showViewerNav && preview && (
             <PreviewSelectors
               compact
+              requireFilePick
               folders={preview.folders}
               currentFolder={preview.currentFolder}
               files={preview.files}
@@ -66,32 +68,35 @@ export default function AppHeader({
               activeSheet={preview.activeSheet}
               onSheetChange={preview.onSheetChange}
               sheetsLoading={preview.sheetsLoading}
-              onFolderSelect={(folderId) => router.push(`/folders/${folderId}`)}
+              onFolderSelect={(folderId) => router.push(`/?folder=${folderId}`)}
             />
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-3">
             {isAdmin && (
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#0c1222] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#1a2236]"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                Upload
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0c1222] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#1a2236]"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Upload
+                </button>
+                <div className="hidden text-right text-xs leading-tight sm:block">
+                  <div className="font-medium text-[#0c1222]">{email}</div>
+                  <div className="text-[#8a91a0]">Administrator</div>
+                </div>
+                <form action="/auth/signout" method="post">
+                  <button className="rounded-xl border border-[#e0e3ea] px-3 py-2 text-sm text-[#3d4454] hover:bg-[#f4f5f7]">
+                    Keluar
+                  </button>
+                </form>
+              </>
             )}
-            <div className="hidden text-right text-xs leading-tight sm:block">
-              <div className="font-medium text-[#0c1222]">{email}</div>
-              <div className="text-[#8a91a0]">{isAdmin ? "Administrator" : "Viewer"}</div>
-            </div>
-            <form action="/auth/signout" method="post">
-              <button className="rounded-xl border border-[#e0e3ea] px-3 py-2 text-sm text-[#3d4454] hover:bg-[#f4f5f7]">
-                Keluar
-              </button>
-            </form>
+            {isViewer && <UserMenu email={email} roleLabel="Viewer" />}
           </div>
         </div>
       </header>
