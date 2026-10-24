@@ -11,7 +11,6 @@ export default function DrivePreviewShell({
   files,
   currentFileId,
   fileTitle,
-  fileDescription = "",
   titleActions,
 }: {
   folders: DriveFolder[];
@@ -19,7 +18,6 @@ export default function DrivePreviewShell({
   files: ExcelDocument[];
   currentFileId: string;
   fileTitle: string;
-  fileDescription?: string;
   titleActions?: React.ReactNode;
 }) {
   const [sheets, setSheets] = useState<SheetOption[]>([]);
@@ -32,21 +30,20 @@ export default function DrivePreviewShell({
   }
 
   return (
-    <div>
+    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col">
       <PreviewNav
         folders={folders}
         currentFolder={currentFolder}
         files={files}
         currentFileId={currentFileId}
         fileTitle={fileTitle}
-        fileDescription={fileDescription}
         titleActions={titleActions}
         sheets={sheets}
         activeSheet={activeSheet}
         onSheetChange={setActiveSheet}
         sheetsLoading={sheetsLoading}
       />
-      <div className="w-full px-5 py-6">
+      <div className="mx-auto w-full max-w-[1280px] flex-1 px-5 pb-6 pt-3">
         <DriveFileViewer
           key={currentFileId}
           fileId={currentFileId}

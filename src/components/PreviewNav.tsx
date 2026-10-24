@@ -23,7 +23,6 @@ export default function PreviewNav({
   files,
   currentFileId,
   fileTitle,
-  fileDescription,
   titleActions,
   sheets,
   activeSheet,
@@ -35,7 +34,6 @@ export default function PreviewNav({
   files: ExcelDocument[];
   currentFileId: string;
   fileTitle: string;
-  fileDescription?: string;
   titleActions?: React.ReactNode;
   sheets: SheetOption[];
   activeSheet: number;
@@ -57,25 +55,14 @@ export default function PreviewNav({
 
   return (
     <div className="sticky top-14 z-30 border-b border-[#e8eaef] bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-center gap-3 px-5 py-2.5">
-        <div className="min-w-0 flex-1 basis-[180px]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#8a91a0]">
-            File
-          </p>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <p className="truncate font-display text-base font-semibold tracking-tight text-[#0c1222] sm:text-lg">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-start gap-3 px-5 py-2.5">
+        <div className="min-w-0 flex-1 basis-[200px]">
+          <div className="flex min-w-0 flex-wrap items-start gap-2">
+            <p className="min-w-0 flex-1 break-words text-[13px] font-medium leading-snug text-[#0c1222]">
               {fileTitle}
             </p>
             {titleActions}
           </div>
-          {fileDescription ? (
-            <p className="mt-0.5 truncate text-xs text-[#8a91a0]">{fileDescription}</p>
-          ) : null}
-          {currentFolder ? (
-            <p className="mt-0.5 truncate text-[11px] text-[#b0b5c0]">
-              Folder: {currentFolder.name}
-            </p>
-          ) : null}
         </div>
 
         <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto lg:flex-nowrap">

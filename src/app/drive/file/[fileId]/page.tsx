@@ -95,7 +95,6 @@ export default async function DriveFilePage({
       files={siblingFiles}
       currentFileId={fileId}
       fileTitle={title}
-      fileDescription={description}
       titleActions={
         <PreviewTitleEdit
           documentId={currentDoc?.id ?? null}
