@@ -30,8 +30,8 @@ export default function PreviewNav({
   sheetsLoading?: boolean;
 }) {
   return (
-    <div className="sticky top-14 z-30 border-b border-[#e8eaef] bg-white/95 backdrop-blur-md">
-      <div className="flex w-full flex-wrap items-end gap-2 px-3 py-2.5 sm:px-4">
+    <div className="sticky top-14 z-30 overflow-visible border-b border-[#e8eaef] bg-white/95 backdrop-blur-md">
+      <div className="w-full overflow-visible px-3 py-2.5 sm:px-4">
         <PreviewSelectors
           folders={folders}
           currentFolder={currentFolder}

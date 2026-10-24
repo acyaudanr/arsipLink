@@ -73,16 +73,12 @@ export default function SearchableSelect({
     );
   }, [options, query]);
 
+  // Lebar trigger = teks yang tampil (bukan opsi terpanjang), supaya tidak ke-potong
   const triggerCh = useMemo(() => {
-    const labels = [
-      selected?.label ?? placeholder,
-      ...options.map((o) => o.label),
-      // label atas ikut dihitung supaya tidak numpuk dengan select tetangga
-      ...(label ? [label] : []),
-    ];
-    const longest = labels.reduce((m, s) => Math.max(m, s.length), 0);
-    return clamp(longest + 2, minCh, maxCh);
-  }, [options, selected, placeholder, label, minCh, maxCh]);
+    const shown = selected?.label ?? placeholder;
+    const n = Math.max(shown.length, label?.length ?? 0);
+    return clamp(n + 3, minCh, maxCh);
+  }, [selected, placeholder, label, minCh, maxCh]);
 
   useEffect(() => {
     if (!open) return;
@@ -180,7 +176,7 @@ export default function SearchableSelect({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-1/2 z-50 mt-1.5 min-w-full -translate-x-1/2 overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
+          className="absolute left-0 z-50 mt-1.5 overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
           style={{
             width: "max-content",
             minWidth: "100%",

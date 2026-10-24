@@ -117,7 +117,11 @@ export default function PreviewSelectors({
     sheetsLoading || sheets.length === 0 ? "" : String(activeSheet);
 
   return (
-    <div className="flex w-fit max-w-full flex-wrap items-end justify-center gap-2">
+    <div
+      className={`flex max-w-full flex-wrap items-end gap-3 ${
+        compact ? "w-fit justify-center" : "w-full justify-start"
+      }`}
+    >
       <SearchableSelect
         label="Pilih folder"
         compact={compact}
@@ -128,8 +132,8 @@ export default function PreviewSelectors({
         onChange={onFolderChange}
         placeholder="Pilih folder"
         searchPlaceholder="Cari folder…"
-        minCh={12}
-        maxCh={28}
+        minCh={14}
+        maxCh={compact ? 32 : 48}
       />
 
       <SearchableSelect
@@ -140,8 +144,8 @@ export default function PreviewSelectors({
         onChange={onFileChange}
         placeholder="Pilih file"
         searchPlaceholder="Cari file…"
-        minCh={16}
-        maxCh={42}
+        minCh={18}
+        maxCh={compact ? 48 : 72}
       />
 
       <SearchableSelect
@@ -157,7 +161,7 @@ export default function PreviewSelectors({
         placeholder="Pilih sheet"
         searchPlaceholder="Cari sheet…"
         minCh={14}
-        maxCh={32}
+        maxCh={compact ? 36 : 48}
       />
     </div>
   );
