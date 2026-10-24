@@ -19,7 +19,7 @@ type ColSize = {
 };
 
 /** Isi panjang di atas ini → kolom canGrow (wrap), bukan dipaksa satu baris. */
-const CONTENT_GROW_AT = 28;
+const CONTENT_GROW_AT = 40;
 
 /** Lebar dari panjang header utuh (satu line) + sampel isi. */
 function measureColWidths(
