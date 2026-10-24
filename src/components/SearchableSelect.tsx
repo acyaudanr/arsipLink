@@ -179,7 +179,11 @@ export default function SearchableSelect({
           id={listId}
           role="listbox"
           className="absolute left-1/2 z-50 mt-1.5 min-w-full -translate-x-1/2 overflow-hidden rounded-xl border border-[#e6e8ee] bg-white shadow-[0_18px_48px_-24px_rgba(12,18,34,0.55)]"
-          style={{ width: `max(100%, ${clamp(triggerCh + 8, 20, 44)}ch)` }}
+          style={{
+            width: "max-content",
+            minWidth: "100%",
+            maxWidth: "min(92vw, 42rem)",
+          }}
         >
           <div className="border-b border-[#eef0f4] p-2">
             <div className="relative">
@@ -206,7 +210,7 @@ export default function SearchableSelect({
             </div>
           </div>
 
-          <ul className="max-h-56 overflow-y-auto py-1">
+          <ul className="max-h-64 overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-sm text-[#8a91a0]">{emptyText}</li>
             ) : (
@@ -221,33 +225,18 @@ export default function SearchableSelect({
                       aria-selected={active}
                       onMouseEnter={() => setHighlight(i)}
                       onClick={() => pick(opt.value)}
-                      className={`flex w-full items-start gap-2 px-3 py-2 text-left transition ${
-                        hi ? "bg-[#f0faf6]" : "bg-white"
-                      } ${active ? "text-[#1f6b5a]" : "text-[#0c1222]"}`}
+                      className={`w-full px-3 py-2 text-left transition ${
+                        hi ? "bg-[#f4f5f7]" : "bg-white"
+                      } ${active ? "bg-[#f0faf6] font-semibold text-[#0c1222]" : "font-medium text-[#0c1222]"}`}
                     >
-                      <span
-                        className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border ${
-                          active
-                            ? "border-[#1f6b5a] bg-[#1f6b5a] text-white"
-                            : "border-[#d5d8e0] bg-white"
-                        }`}
-                      >
-                        {active ? (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <path d="M5 12l5 5L20 7" />
-                          </svg>
-                        ) : null}
+                      <span className="block whitespace-normal break-words text-sm leading-snug">
+                        {opt.label}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`block truncate text-sm ${active ? "font-semibold" : "font-medium"}`}>
-                          {opt.label}
+                      {opt.hint ? (
+                        <span className="mt-0.5 block whitespace-normal break-words text-[11px] font-normal text-[#8a91a0]">
+                          {opt.hint}
                         </span>
-                        {opt.hint ? (
-                          <span className="mt-0.5 block truncate text-[11px] text-[#8a91a0]">
-                            {opt.hint}
-                          </span>
-                        ) : null}
-                      </span>
+                      ) : null}
                     </button>
                   </li>
                 );
