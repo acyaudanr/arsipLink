@@ -51,7 +51,7 @@ export default function PreviewNav({
 
   return (
     <div className="sticky top-14 z-30 border-b border-[#e8eaef] bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1280px] flex-wrap items-end gap-2 px-5 py-2.5">
+      <div className="flex w-full flex-wrap items-end gap-2 px-3 py-2.5 sm:px-4">
         <label className="min-w-[140px] flex-1 lg:flex-none">
           <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a91a0]">
             Pilih folder

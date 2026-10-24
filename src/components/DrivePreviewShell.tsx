@@ -37,7 +37,7 @@ export default function DrivePreviewShell({
         onSheetChange={setActiveSheet}
         sheetsLoading={sheetsLoading}
       />
-      <div className="mx-auto w-full max-w-[1280px] flex-1 px-5 pb-6 pt-3">
+      <div className="w-full flex-1 px-3 pb-4 pt-2 sm:px-4">
         <DriveFileViewer
           key={currentFileId}
           fileId={currentFileId}

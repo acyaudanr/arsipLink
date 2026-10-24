@@ -1,11 +1,113 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ConfirmModal from "@/components/ConfirmModal";
 import type { DriveFolder, Profile } from "@/lib/types";
 
 type AccessMap = Record<string, string[]>;
+
+function FolderChecklist({
+  folders,
+  selected,
+  onChange,
+}: {
+  folders: DriveFolder[];
+  selected: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  function toggle(id: string) {
+    onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  }
+
+  if (folders.length === 0) {
+    return <p className="text-sm text-[#8a91a0]">Belum ada folder. Buat folder dulu di beranda.</p>;
+  }
+
+  return (
+    <ul className="grid max-h-48 gap-2 overflow-y-auto sm:grid-cols-2">
+      {folders.map((f) => (
+        <li key={f.id}>
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-[#e8eaef] px-3 py-2.5 text-sm hover:bg-[#fafaf8]">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={selected.includes(f.id)}
+              onChange={() => toggle(f.id)}
+            />
+            <span className="min-w-0">
+              <span className="block font-medium text-[#0c1222]">{f.name}</span>
+              {f.description ? (
+                <span className="block truncate text-xs text-[#8a91a0]">{f.description}</span>
+              ) : null}
+            </span>
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ModalShell({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Tutup"
+        className="absolute inset-0 bg-[#0c1222]/55 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-[#e6e8ee] bg-white shadow-[0_24px_80px_-24px_rgba(12,18,34,0.45)]"
+      >
+        <div className="flex items-start justify-between border-b border-[#eef0f4] px-5 py-4">
+          <div>
+            <h2 className="font-display text-lg font-semibold tracking-tight text-[#0c1222]">
+              {title}
+            </h2>
+            {subtitle ? <p className="mt-0.5 text-sm text-[#6b7285]">{subtitle}</p> : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-[#6b7285] hover:bg-[#f4f5f7] hover:text-[#0c1222]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-5 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function UsersClient({
   profiles,
@@ -23,6 +125,7 @@ export default function UsersClient({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const [addOpen, setAddOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [newFolderIds, setNewFolderIds] = useState<string[]>([]);
@@ -31,13 +134,22 @@ export default function UsersClient({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editFolderIds, setEditFolderIds] = useState<string[]>([]);
 
+  const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  const [deleteUser, setDeleteUser] = useState<Profile | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const folderName = useMemo(() => {
     const map = new Map(folders.map((f) => [f.id, f.name]));
     return (id: string) => map.get(id) ?? id.slice(0, 8);
   }, [folders]);
 
-  function toggleInList(list: string[], id: string) {
-    return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+  function resetAddForm() {
+    setEmail("");
+    setPassword("");
+    setNewFolderIds([]);
   }
 
   async function createViewer(e: React.FormEvent) {
@@ -53,9 +165,8 @@ export default function UsersClient({
       });
       const json = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Gagal membuat viewer");
-      setEmail("");
-      setPassword("");
-      setNewFolderIds([]);
+      resetAddForm();
+      setAddOpen(false);
       setMessage("Viewer berhasil dibuat.");
       router.refresh();
     } catch (err) {
@@ -117,8 +228,51 @@ export default function UsersClient({
     }
   }
 
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!passwordUser) return;
+    setSavingPassword(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/users/${passwordUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Gagal mengubah password");
+      setPasswordUser(null);
+      setNewPassword("");
+      setMessage(`Password ${passwordUser.email} diperbarui.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengubah password");
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteUser) return;
+    setDeleting(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/users/${deleteUser.id}`, { method: "DELETE" });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Gagal menghapus");
+      setDeleteUser(null);
+      setMessage(`Akun ${deleteUser.email} dihapus.`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {(error || message) && (
         <p
           className={`rounded-xl border px-3 py-2 text-sm ${
@@ -131,75 +285,18 @@ export default function UsersClient({
         </p>
       )}
 
-      <section className="rounded-2xl border border-[#e8eaef] bg-white p-5">
-        <h2 className="mb-1 text-base font-semibold text-[#0c1222]">Tambah Viewer</h2>
-        <p className="mb-4 text-sm text-[#6b7285]">
-          Buat akun viewer baru dan pilih folder yang boleh dilihat.
-        </p>
-        <form onSubmit={createViewer} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#0c1222]">Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-[#e0e3ea] px-3 py-2.5 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15"
-                placeholder="viewer@email.com"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#0c1222]">Password</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-[#e0e3ea] px-3 py-2.5 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15"
-                placeholder="Minimal 6 karakter"
-              />
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-[#0c1222]">Akses folder</p>
-            {folders.length === 0 ? (
-              <p className="text-sm text-[#8a91a0]">Belum ada folder. Buat folder dulu di beranda.</p>
-            ) : (
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {folders.map((f) => (
-                  <li key={f.id}>
-                    <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-[#e8eaef] px-3 py-2.5 text-sm hover:bg-[#fafaf8]">
-                      <input
-                        type="checkbox"
-                        className="mt-0.5"
-                        checked={newFolderIds.includes(f.id)}
-                        onChange={() => setNewFolderIds((prev) => toggleInList(prev, f.id))}
-                      />
-                      <span className="min-w-0">
-                        <span className="block font-medium text-[#0c1222]">{f.name}</span>
-                        {f.description ? (
-                          <span className="block truncate text-xs text-[#8a91a0]">{f.description}</span>
-                        ) : null}
-                      </span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={creating}
-            className="rounded-xl bg-[#0c1222] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1a2236] disabled:opacity-60"
-          >
-            {creating ? "Membuat..." : "Buat Viewer"}
-          </button>
-        </form>
-      </section>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setAddOpen(true);
+          }}
+          className="rounded-xl bg-[#0c1222] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1a2236]"
+        >
+          + Tambah Viewer
+        </button>
+      </div>
 
       <section className="overflow-hidden rounded-2xl border border-[#e8eaef] bg-white">
         <table className="w-full text-sm">
@@ -215,11 +312,12 @@ export default function UsersClient({
             {profiles.map((p) => {
               const access = accessByUser[p.id] ?? [];
               const isEditing = editingId === p.id;
+              const isSelf = p.id === currentUserId;
               return (
                 <tr key={p.id} className="align-top hover:bg-[#fafaf8]">
                   <td className="px-5 py-3.5 font-medium text-[#0c1222]">
                     {p.email}
-                    {p.id === currentUserId && (
+                    {isSelf && (
                       <span className="ml-2 text-xs font-normal text-[#a0a6b4]">(kamu)</span>
                     )}
                   </td>
@@ -231,22 +329,11 @@ export default function UsersClient({
                       <span className="text-[#8a91a0]">Semua folder</span>
                     ) : isEditing ? (
                       <div className="space-y-2">
-                        {folders.length === 0 ? (
-                          <p className="text-[#8a91a0]">Belum ada folder</p>
-                        ) : (
-                          folders.map((f) => (
-                            <label key={f.id} className="flex items-center gap-2 text-[#3d4454]">
-                              <input
-                                type="checkbox"
-                                checked={editFolderIds.includes(f.id)}
-                                onChange={() =>
-                                  setEditFolderIds((prev) => toggleInList(prev, f.id))
-                                }
-                              />
-                              {f.name}
-                            </label>
-                          ))
-                        )}
+                        <FolderChecklist
+                          folders={folders}
+                          selected={editFolderIds}
+                          onChange={setEditFolderIds}
+                        />
                         <div className="flex gap-2 pt-1">
                           <button
                             type="button"
@@ -288,6 +375,17 @@ export default function UsersClient({
                       )}
                       <button
                         type="button"
+                        onClick={() => {
+                          setError(null);
+                          setNewPassword("");
+                          setPasswordUser(p);
+                        }}
+                        className="rounded-lg border border-[#e0e3ea] px-3 py-1.5 text-xs font-medium text-[#3d4454] hover:bg-[#f4f5f7]"
+                      >
+                        Ganti password
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => toggleRole(p)}
                         disabled={busyId === p.id}
                         className="rounded-lg border border-[#e0e3ea] px-3 py-1.5 text-xs font-medium text-[#3d4454] hover:bg-[#f4f5f7] disabled:opacity-60"
@@ -298,6 +396,18 @@ export default function UsersClient({
                             ? "Jadikan Viewer"
                             : "Jadikan Admin"}
                       </button>
+                      {!isSelf && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setError(null);
+                            setDeleteUser(p);
+                          }}
+                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                        >
+                          Hapus
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -306,6 +416,116 @@ export default function UsersClient({
           </tbody>
         </table>
       </section>
+
+      <ModalShell
+        open={addOpen}
+        onClose={() => !creating && setAddOpen(false)}
+        title="Tambah Viewer"
+        subtitle="Buat akun viewer dan pilih folder yang boleh dilihat."
+      >
+        <form onSubmit={createViewer} className="space-y-3.5">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[#0c1222]">Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-[#e0e3ea] px-3 py-2.5 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15"
+              placeholder="viewer@email.com"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[#0c1222]">Password</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-xl border border-[#e0e3ea] px-3 py-2.5 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15"
+              placeholder="Minimal 6 karakter"
+            />
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-medium text-[#0c1222]">Akses folder</p>
+            <FolderChecklist folders={folders} selected={newFolderIds} onChange={setNewFolderIds} />
+          </div>
+          <div className="flex items-center justify-end gap-2 border-t border-[#eef0f4] pt-4">
+            <button
+              type="button"
+              onClick={() => setAddOpen(false)}
+              disabled={creating}
+              className="rounded-xl px-4 py-2.5 text-sm font-medium text-[#6b7285] hover:bg-[#f4f5f7]"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={creating}
+              className="rounded-xl bg-[#0c1222] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1a2236] disabled:opacity-60"
+            >
+              {creating ? "Membuat..." : "Buat Viewer"}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+
+      <ModalShell
+        open={!!passwordUser}
+        onClose={() => !savingPassword && setPasswordUser(null)}
+        title="Ganti password"
+        subtitle={passwordUser?.email}
+      >
+        <form onSubmit={savePassword} className="space-y-3.5">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[#0c1222]">
+              Password baru
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full rounded-xl border border-[#e0e3ea] px-3 py-2.5 text-sm outline-none focus:border-[#1f6b5a] focus:ring-2 focus:ring-[#1f6b5a]/15"
+              placeholder="Minimal 6 karakter"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2 border-t border-[#eef0f4] pt-4">
+            <button
+              type="button"
+              onClick={() => setPasswordUser(null)}
+              disabled={savingPassword}
+              className="rounded-xl px-4 py-2.5 text-sm font-medium text-[#6b7285] hover:bg-[#f4f5f7]"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={savingPassword}
+              className="rounded-xl bg-[#0c1222] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1a2236] disabled:opacity-60"
+            >
+              {savingPassword ? "Menyimpan..." : "Simpan"}
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+
+      <ConfirmModal
+        open={!!deleteUser}
+        onClose={() => !deleting && setDeleteUser(null)}
+        onConfirm={confirmDelete}
+        busy={deleting}
+        title="Hapus pengguna?"
+        description={
+          deleteUser
+            ? `Akun “${deleteUser.email}” akan dihapus permanen dan tidak bisa login lagi.`
+            : undefined
+        }
+        confirmLabel="Ya, hapus"
+        tone="danger"
+      />
     </div>
   );
 }

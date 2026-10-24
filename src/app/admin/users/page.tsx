@@ -34,8 +34,7 @@ export default async function AdminUsersPage() {
         Pengguna
       </h1>
       <p className="mb-8 max-w-xl text-sm leading-relaxed text-[#6b7285]">
-        Daftarkan Viewer di sini dan tentukan folder mana saja yang boleh mereka buka. Login publik
-        hanya untuk masuk, tanpa daftar.
+        Tambah, hapus, ganti password, dan atur folder akses Viewer. Login publik hanya untuk masuk.
       </p>
       <UsersClient
         profiles={(profiles ?? []) as Profile[]}
