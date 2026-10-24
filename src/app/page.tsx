@@ -1,15 +1,53 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import type { DriveFolder } from "@/lib/types";
+import type { DriveFolder, ExcelDocument } from "@/lib/types";
 import FolderActions from "@/components/FolderActions";
 
 export const dynamic = "force-dynamic";
+
+async function redirectViewerToFirstFile() {
+  const supabase = await createClient();
+  const { data: folders } = await supabase
+    .from("drive_folders")
+    .select("id")
+    .order("name", { ascending: true });
+
+  for (const folder of folders ?? []) {
+    const { data: files } = await supabase
+      .from("excel_documents")
+      .select("drive_file_id, title")
+      .eq("folder_id", folder.id)
+      .eq("drive_kind", "file")
+      .order("title", { ascending: true })
+      .limit(1);
+
+    const first = files?.[0] as Pick<ExcelDocument, "drive_file_id" | "title"> | undefined;
+    if (first?.drive_file_id) {
+      const title = encodeURIComponent(first.title || "File");
+      redirect(`/drive/file/${first.drive_file_id}?title=${title}`);
+    }
+  }
+}
 
 export default async function DashboardPage() {
   const profile = await getCurrentProfile();
   const supabase = await createClient();
   const isAdmin = profile?.role === "admin";
+
+  // Viewer langsung ke preview file pertama yang diizinkan
+  if (profile?.role === "viewer") {
+    await redirectViewerToFirstFile();
+    return (
+      <div className="mx-auto max-w-lg px-5 py-16 text-center">
+        <p className="font-display text-xl text-[#0c1222]">Belum ada file</p>
+        <p className="mt-2 text-sm text-[#6b7285]">
+          Belum ada folder/file yang diizinkan untuk akunmu. Minta Administrator mengatur akses.
+        </p>
+      </div>
+    );
+  }
 
   const { data: folders } = await supabase
     .from("drive_folders")
@@ -38,9 +76,8 @@ export default async function DashboardPage() {
           Folder
         </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-[#6b7285]">
-          {isAdmin
-            ? "Buka folder untuk melihat file Drive di dalamnya. Tambah folder atau link lewat tombol Upload di pojok kanan atas."
-            : "Pilih folder yang diizinkan Administrator. Akses kamu hanya untuk melihat."}
+          Buka folder untuk melihat file Drive di dalamnya. Tambah folder atau link lewat tombol
+          Upload di pojok kanan atas.
         </p>
       </div>
 
@@ -48,9 +85,7 @@ export default async function DashboardPage() {
         <div className="rounded-2xl border border-dashed border-[#d5d8e0] bg-white/70 px-6 py-16 text-center">
           <p className="font-display text-xl text-[#0c1222]">Belum ada folder</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-[#6b7285]">
-            {isAdmin
-              ? "Klik Upload di navigasi atas, buat folder baru, lalu tempel link Google Drive."
-              : "Belum ada folder yang diizinkan untuk akunmu. Minta Administrator mengatur akses."}
+            Klik Upload di navigasi atas, buat folder baru, lalu tempel link Google Drive.
           </p>
         </div>
       ) : (
@@ -60,10 +95,7 @@ export default async function DashboardPage() {
               key={folder.id}
               className="group flex overflow-hidden rounded-2xl border border-[#e8eaef] bg-white transition hover:border-[#cfd8d4] hover:shadow-[0_12px_32px_-20px_rgba(12,18,34,0.35)]"
             >
-              <Link
-                href={`/folders/${folder.id}`}
-                className="flex min-w-0 flex-1 items-stretch"
-              >
+              <Link href={`/folders/${folder.id}`} className="flex min-w-0 flex-1 items-stretch">
                 <div className="flex min-w-0 flex-1 gap-4 p-5">
                   <span className="mt-0.5 grid size-11 shrink-0 place-items-center rounded-xl border border-[#e8eaef] bg-[#f7f6f3] text-[#1f6b5a]">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

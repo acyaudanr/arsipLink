@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import type { DriveFolder, ExcelDocument } from "@/lib/types";
@@ -29,10 +29,28 @@ export default async function FolderDetailPage({
     .from("excel_documents")
     .select("*")
     .eq("folder_id", id)
-    .order("created_at", { ascending: false });
+    .order("title", { ascending: true });
 
   const f = folder as DriveFolder;
   const list = (files ?? []) as ExcelDocument[];
+
+  // Viewer: langsung buka file pertama di folder (tidak lewat list)
+  if (!isAdmin) {
+    const firstFile = list.find((doc) => doc.drive_kind === "file" && doc.drive_file_id);
+    if (firstFile?.drive_file_id) {
+      const title = encodeURIComponent(firstFile.title || "File");
+      redirect(`/drive/file/${firstFile.drive_file_id}?title=${title}`);
+    }
+    return (
+      <div className="mx-auto max-w-lg px-5 py-16 text-center">
+        <p className="font-display text-xl text-[#0c1222]">Folder kosong</p>
+        <p className="mt-2 text-sm text-[#6b7285]">Belum ada file di folder “{f.name}”.</p>
+        <Link href="/" className="mt-4 inline-block text-sm text-[#1f6b5a] hover:underline">
+          Kembali
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1280px] px-5 py-8">

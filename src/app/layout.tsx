@@ -3,6 +3,7 @@ import { Instrument_Sans, Newsreader } from "next/font/google";
 import "./globals.css";
 import { getCurrentProfile } from "@/lib/auth";
 import AppHeader from "@/components/AppHeader";
+import { ViewerPreviewProvider } from "@/components/ViewerPreviewContext";
 
 const sans = Instrument_Sans({
   subsets: ["latin"],
@@ -27,8 +28,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="id" className={`${sans.variable} ${display.variable}`}>
       <body className="min-h-screen font-[family-name:var(--font-sans)] antialiased">
-        {profile && <AppHeader email={profile.email} role={profile.role} />}
-        <main>{children}</main>
+        <ViewerPreviewProvider>
+          {profile && <AppHeader email={profile.email} role={profile.role} />}
+          <main>{children}</main>
+        </ViewerPreviewProvider>
       </body>
     </html>
   );

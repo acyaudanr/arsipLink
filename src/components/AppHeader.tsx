@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import UploadModal from "@/components/UploadModal";
+import PreviewSelectors from "@/components/PreviewSelectors";
+import { useViewerPreview } from "@/components/ViewerPreviewContext";
 
 export default function AppHeader({
   email,
@@ -13,12 +16,20 @@ export default function AppHeader({
 }) {
   const [open, setOpen] = useState(false);
   const isAdmin = role === "admin";
+  const isViewer = role === "viewer";
+  const preview = useViewerPreview();
+  const router = useRouter();
+  const showViewerNav = isViewer && preview !== null;
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8eaef] bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-6 px-5">
-          <Link href="/" className="group flex items-center gap-2.5">
+        <div
+          className={`flex w-full items-center gap-3 px-3 sm:px-4 ${
+            showViewerNav ? "min-h-14 flex-wrap py-2" : "mx-auto h-14 max-w-[1280px] px-5"
+          }`}
+        >
+          <Link href={isViewer ? "/" : "/"} className="group flex shrink-0 items-center gap-2.5">
             <span className="grid size-8 place-items-center rounded-md bg-[#0c1222] font-display text-[13px] font-bold tracking-wide text-white">
               AR
             </span>
@@ -27,24 +38,39 @@ export default function AppHeader({
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 text-sm sm:flex">
-            <Link
-              href="/"
-              className="rounded-lg px-3 py-1.5 text-[#3d4454] hover:bg-[#f4f5f7] hover:text-[#0c1222]"
-            >
-              Folder
-            </Link>
-            {isAdmin && (
+          {isAdmin && (
+            <nav className="hidden items-center gap-1 text-sm sm:flex">
+              <Link
+                href="/"
+                className="rounded-lg px-3 py-1.5 text-[#3d4454] hover:bg-[#f4f5f7] hover:text-[#0c1222]"
+              >
+                Folder
+              </Link>
               <Link
                 href="/admin/users"
                 className="rounded-lg px-3 py-1.5 text-[#3d4454] hover:bg-[#f4f5f7] hover:text-[#0c1222]"
               >
                 Pengguna
               </Link>
-            )}
-          </nav>
+            </nav>
+          )}
 
-          <div className="ml-auto flex items-center gap-3">
+          {showViewerNav && preview && (
+            <PreviewSelectors
+              compact
+              folders={preview.folders}
+              currentFolder={preview.currentFolder}
+              files={preview.files}
+              currentFileId={preview.currentFileId}
+              sheets={preview.sheets}
+              activeSheet={preview.activeSheet}
+              onSheetChange={preview.onSheetChange}
+              sheetsLoading={preview.sheetsLoading}
+              onFolderSelect={(folderId) => router.push(`/folders/${folderId}`)}
+            />
+          )}
+
+          <div className="ml-auto flex shrink-0 items-center gap-3">
             {isAdmin && (
               <button
                 type="button"

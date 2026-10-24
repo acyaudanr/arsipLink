@@ -93,6 +93,7 @@ export default async function DriveFilePage({
       currentFolder={currentFolder}
       files={siblingFiles}
       currentFileId={fileId}
+      isViewer={!isAdmin}
     />
   );
 }
